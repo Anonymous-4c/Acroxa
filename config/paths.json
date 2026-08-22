@@ -1,0 +1,16 @@
+{
+  "baseURL": "/acrx",
+  "apiBase" : "/acr/api",
+  "routes": {
+    "login": "/acroxa/login",
+    "logout": "/acrx/logout",
+    "dashboard": "/acrx/dashboard",
+    "posts": "/acrx/posts",
+    "media": "/acrx/media",
+    "mediaUpload": "/acrx/media/upload",
+    "categories": "/acrx/categories",
+    "categoryNew": "/acrx/category/new",
+    "profile": "/acrx/profile",
+    "system": "/acrx/system"
+  }
+}

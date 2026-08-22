@@ -1,0 +1,274 @@
+{
+  "name": "Aurora Spring",
+  "version": "1.0.0",
+  "description": "A refined light-theme layout for premium content-driven websites — spacious, readable, and conversion-ready.",
+  "preview": "/preview/screenshot.png",
+  "author": {
+    "name": "Acroxa",
+    "url": "https://www.acroxa.com"
+  },
+  "stylesheets": [
+    "/layouts/framework/reset.css",
+    "/layouts/framework/variables.css",
+    "/layouts/framework/typography.css",
+    "/layouts/framework/components.css",
+    "/layouts/framework/utilities.css",
+    "/layouts/framework/layout-grid.css",
+    "/layouts/framework/layout-flex.css",
+    "/layouts/framework/animations.css",
+    "/layouts/framework/responsive.css",
+    "/layouts/aurora_spring/theme.css"
+  ],
+  "customStyles": "",
+  "customScripts": "document.addEventListener('DOMContentLoaded',function(){var t=document.getElementById('as-menu-toggle'),p=document.getElementById('as-mobile-nav');if(!t||!p)return;t.addEventListener('click',function(){var o=p.classList.toggle('is-open');p.hidden=!o;t.setAttribute('aria-expanded',o?'true':'false');});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&p.classList.contains('is-open')){p.classList.remove('is-open');p.hidden=true;t.setAttribute('aria-expanded','false');}});});",
+  "templates": {
+    "404": "404",
+    "homepage": "homepage",
+    "blog": "blog",
+    "post": "post",
+    "page": "page",
+    "category": "category",
+    "landing": "page"
+  },
+  "widgetAreas": [
+    "sidebar",
+    "footer-col-1",
+    "footer-col-2",
+    "footer-col-3"
+  ],
+  "menuAreas": [
+    "primary",
+    "footer"
+  ],
+  "config": {
+    "layout": {
+      "sidebar": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "label": "Enable Sidebar"
+        },
+        "position": {
+          "type": "select",
+          "default": "right",
+          "label": "Sidebar position",
+          "options": ["left", "right"]
+        },
+        "width": {
+          "type": "text",
+          "default": "320px",
+          "label": "Sidebar width",
+          "placeholder": "e.g. 320px"
+        },
+        "show_on_homepage": {
+          "type": "boolean",
+          "default": false,
+          "label": "Show sidebar on homepage"
+        },
+        "show_on_pages": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show on pages & blog"
+        },
+        "show_on_posts": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show on posts"
+        }
+      },
+      "containerWidth": {
+        "type": "select",
+        "default": "medium",
+        "label": "Container width",
+        "options": ["small", "medium", "large"]
+      },
+      "headerStyle": {
+        "type": "select",
+        "default": "standard",
+        "label": "Header style",
+        "options": ["standard", "minimal", "centered"]
+      },
+      "spacingDensity": {
+        "type": "select",
+        "default": "normal",
+        "label": "Spacing density",
+        "options": ["compact", "normal", "spacious"]
+      },
+      "cardStyle": {
+        "type": "select",
+        "default": "soft",
+        "label": "Card style",
+        "options": ["flat", "soft"]
+      }
+    },
+    "colors": {
+      "primary": {
+        "type": "color",
+        "default": "#2563eb",
+        "label": "Primary accent"
+      },
+      "secondary": {
+        "type": "color",
+        "default": "#525252",
+        "label": "Secondary"
+      },
+      "accent": {
+        "type": "color",
+        "default": "#0d9488",
+        "label": "Accent highlight"
+      },
+      "textLight": {
+        "type": "color",
+        "default": "#0d9488",
+        "label": "Text (Light Mode)"
+      },
+      "textDark": {
+        "type": "color",
+        "default": "#0d9488",
+        "label": "Text (Dark Mode)"
+      },
+      "bgLight": {
+        "type": "color",
+        "default": "#fafafa",
+        "label": "Background (Light Mode)"
+      },
+      "bgDark": {
+        "type": "color",
+        "default": "#0d9488",
+        "label": "Background (Dark Mode)"
+      }
+    },
+    "typography": {
+      "headingFont": {
+        "type": "text",
+        "default": "'Source Serif 4', Georgia, serif",
+        "label": "Heading font"
+      },
+      "bodyFont": {
+        "type": "text",
+        "default": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "label": "Body font"
+      },
+      "scale": {
+        "type": "select",
+        "default": "normal",
+        "label": "Typography scale",
+        "options": ["compact", "normal", "spacious"]
+      },
+      "baseFontSize": {
+        "type": "range",
+        "default": 16,
+        "min": 14,
+        "max": 20,
+        "step": 1,
+        "unit": "px",
+        "label": "Base font size"
+      }
+    },
+    "homepage": {
+      "heroEyebrow": {
+        "type": "text",
+        "default": "Rail Fall Grove",
+        "label": "Hero eyebrow",
+        "showOn": "homepage"
+      },
+      "heroTitle": {
+        "type": "text",
+        "default": "Publish with clarity and confidence",
+        "label": "Hero title",
+        "showOn": "homepage"
+      },
+      "heroSubtitle": {
+        "type": "textarea",
+        "default": "A premium light layout for blogs, marketing sites, and editorial brands — modular sections, strong typography, zero visual noise.",
+        "label": "Hero subtitle",
+        "showOn": "homepage"
+      },
+      "heroMediaUrl": {
+        "type": "text",
+        "default": "",
+        "label": "Hero image URL",
+        "showOn": "homepage"
+      },
+      "ctaPrimaryText": {
+        "type": "text",
+        "default": "Read the blog",
+        "label": "Primary CTA text"
+      },
+      "ctaPrimaryUrl": {
+        "type": "text",
+        "default": "/blog",
+        "label": "Primary CTA URL"
+      },
+      "ctaSecondaryText": {
+        "type": "text",
+        "default": "About us",
+        "label": "Secondary CTA text"
+      },
+      "ctaSecondaryUrl": {
+        "type": "text",
+        "default": "/page/about",
+        "label": "Secondary CTA URL"
+      },
+      "showFeatures": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show features section"
+      },
+      "showSplit": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show split section"
+      },
+      "showLogos": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show logos bar"
+      },
+      "showTestimonials": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show testimonials"
+      },
+      "showCtaBanner": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show CTA banner"
+      },
+      "showBlogPreview": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show blog preview"
+      },
+      "blogPreviewCount": {
+        "type": "select",
+        "default": "3",
+        "label": "Blog preview count",
+        "options": ["2", "3", "4", "6"]
+      },
+      "showPricing": {
+        "type": "boolean",
+        "default": true,
+        "label": "Show pricing preview"
+      }
+    }
+  },
+  "features": [
+    "Light theme",
+    "Modular homepage sections",
+    "Blog, post, page, and category templates",
+    "Configurable header and spacing",
+    "Responsive navigation",
+    "SSR-friendly minimal JavaScript",
+    "Contact and about page structures"
+  ],
+  "color_scheme": {
+    "primary": "#2563eb",
+    "secondary": "#525252",
+    "accent": "#0d9488",
+    "textLight": "#0d9488",
+    "textDark": "#0d9488",
+    "bgDark": "#0d9488",
+    "bgLight": "#fafafa"
+  }
+}

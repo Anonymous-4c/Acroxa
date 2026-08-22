@@ -1,0 +1,293 @@
+/* ==============================================
+   ANIMATIONS.CSS - Keyframes & Animation Utils
+   ============================================== */
+
+/* ============= KEYFRAME DEFINITIONS ============= */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-1.5rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-left {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(-1.5rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scale-down {
+  from { opacity: 0; transform: scale(1.08); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes zoom-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes zoom-out {
+  from { opacity: 0; transform: scale(1.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  70%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); animation-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1); }
+  50%       { transform: translateY(-1rem); animation-timing-function: cubic-bezier(0.8, 0.0, 1, 1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-0.4rem); }
+  20%, 40%, 60%, 80%      { transform: translateX(0.4rem); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes rotate-in {
+  from { opacity: 0; transform: rotate(-180deg) scale(0.5); }
+  to   { opacity: 1; transform: rotate(0deg)  scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ── Primary glow ── */
+@keyframes glow-primary {
+  0%, 100% { box-shadow: 0 0 6px 0 var(--color-primary-300); }
+  50%       { box-shadow: 0 0 20px 4px var(--color-primary-400); }
+}
+
+/* ── Secondary glow ── */
+@keyframes glow-secondary {
+  0%, 100% { box-shadow: 0 0 6px 0 var(--color-secondary-300); }
+  50%       { box-shadow: 0 0 20px 4px var(--color-secondary-400); }
+}
+
+[data-theme="dark"] .glow-primary {
+  animation-name: glow-primary-dark;
+}
+
+@keyframes glow-primary-dark {
+  0%, 100% { box-shadow: 0 0 8px 0 var(--color-primary-700); }
+  50%       { box-shadow: 0 0 24px 6px var(--color-primary-600); }
+}
+
+@keyframes glow-secondary-dark {
+  0%, 100% { box-shadow: 0 0 8px 0 var(--color-secondary-700); }
+  50%       { box-shadow: 0 0 24px 6px var(--color-secondary-600); }
+}
+
+/* ── Float ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Heart beat ── */
+@keyframes heartbeat {
+  0%   { transform: scale(1); }
+  14%  { transform: scale(1.15); }
+  28%  { transform: scale(1); }
+  42%  { transform: scale(1.1); }
+  70%  { transform: scale(1); }
+}
+
+/* ── Ripple ── */
+@keyframes ripple {
+  0%   { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ── Gradient shift ── */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ============= ANIMATION UTILITY CLASSES ============= */
+
+/* Fade */
+.fade-in    { animation: fade-in  var(--duration-base) var(--ease-out) both; }
+.fade-out   { animation: fade-out var(--duration-base) var(--ease-out) both; }
+
+/* Slide */
+.slide-up    { animation: slide-up    var(--duration-base) var(--ease-out) both; }
+.slide-down  { animation: slide-down  var(--duration-base) var(--ease-out) both; }
+.slide-left  { animation: slide-left  var(--duration-base) var(--ease-out) both; }
+.slide-right { animation: slide-right var(--duration-base) var(--ease-out) both; }
+
+/* Scale */
+.scale-up   { animation: scale-up   var(--duration-base) var(--ease-out) both; }
+.scale-down { animation: scale-down var(--duration-base) var(--ease-out) both; }
+.zoom-in    { animation: zoom-in    var(--duration-base) var(--ease-out) both; }
+.zoom-out   { animation: zoom-out   var(--duration-base) var(--ease-out) both; }
+
+/* Interactive */
+.pop       { animation: pop       var(--duration-base) var(--ease-in-out); }
+.bounce    { animation: bounce    var(--duration-slow) var(--ease-in-out) infinite; }
+.shake     { animation: shake     var(--duration-slow) var(--ease-in-out); }
+.pulse     { animation: pulse     var(--duration-slower) var(--ease-in-out) infinite; }
+.spin      { animation: spin      var(--duration-slower) var(--ease-linear) infinite; }
+.float     { animation: float     3s var(--ease-in-out) infinite; }
+.heartbeat { animation: heartbeat 1.3s var(--ease-in-out) infinite; }
+.rotate-in { animation: rotate-in var(--duration-slow) var(--ease-out) both; }
+
+/* Glow */
+.glow-primary   { animation: glow-primary   2s var(--ease-in-out) infinite; }
+.glow-secondary { animation: glow-secondary 2s var(--ease-in-out) infinite; }
+
+/* ── Shimmer skeleton ── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-primary-50)   50%,
+    var(--color-bg-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s var(--ease-linear) infinite;
+}
+
+[data-theme="dark"] .shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-800)  0%,
+    var(--color-primary-950)  50%,
+    var(--color-neutral-800)  100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── Gradient animated bg ── */
+.gradient-animated {
+  background: linear-gradient(
+    270deg,
+    var(--color-primary-500),
+    var(--color-secondary-500),
+    var(--color-primary-400)
+  );
+  background-size: 300% 300%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+/* ── Ripple effect (requires JS to add .ripple-active) ── */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  width: 100%;
+  padding-top: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: var(--color-primary-200);
+  opacity: 0;
+}
+
+.ripple:active::after {
+  animation: ripple 0.4s var(--ease-out);
+}
+
+[data-theme="dark"] .ripple::after {
+  background: var(--color-primary-800);
+}
+
+.ripple-secondary::after {
+  background: var(--color-secondary-200);
+}
+
+[data-theme="dark"] .ripple-secondary::after {
+  background: var(--color-secondary-800);
+}
+
+/* ============= SPEED MODIFIERS ============= */
+
+.animate-fast   { animation-duration: var(--duration-fast)   !important; }
+.animate-slow   { animation-duration: var(--duration-slow)   !important; }
+.animate-slower { animation-duration: var(--duration-slower) !important; }
+
+/* ============= DELAY UTILITIES ============= */
+
+.delay-75  { animation-delay: var(--duration-instant); }
+.delay-150 { animation-delay: var(--duration-fast); }
+.delay-250 { animation-delay: var(--duration-base); }
+.delay-350 { animation-delay: var(--duration-slow); }
+.delay-500 { animation-delay: var(--duration-slower); }
+
+/* Staggered children (apply to parent) */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 75ms; }
+.stagger > *:nth-child(3) { animation-delay: 150ms; }
+.stagger > *:nth-child(4) { animation-delay: 225ms; }
+.stagger > *:nth-child(5) { animation-delay: 300ms; }
+.stagger > *:nth-child(6) { animation-delay: 375ms; }
+
+/* ============= FILL MODE ============= */
+
+.animate-forwards  { animation-fill-mode: forwards; }
+.animate-backwards { animation-fill-mode: backwards; }
+.animate-both      { animation-fill-mode: both; }
+
+/* ============= PLAY STATE ============= */
+
+.animate-paused  { animation-play-state: paused; }
+.animate-running { animation-play-state: running; }
+
+/* ============= REDUCE MOTION ============= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,77 @@
+/* ../acrx/assets/css/ad-cat-f.css */
+.category-form-page {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: var(--color-primary-100);
+  border: 1px solid var(--gray-600);
+  border-radius: 10px;
+}
+
+.category-form-page .main-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.category-form-page .form-container {
+  width: 100%;
+}
+
+.category-form-page .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.category-form-page label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--gray-800);
+}
+
+.category-form-page input,
+.category-form-page textarea {
+  padding: 10px;
+  border: 1px solid var(--gray-700);
+  border-radius: 6px;
+  background-color: var(--color-primary-200);
+  color: var(--text-color);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.category-form-page input:focus,
+.category-form-page textarea:focus {
+  border-color: var(--color-primary-700);
+}
+
+.category-form-page textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.category-form-page .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.category-form-page .button-pst {
+  background-color: var(--color-primary-100);
+  border: 1px solid var(--gray-600);
+  padding: 10px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--color-primary-700);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-form-page .button-pst:hover {
+  background-color: var(--color-primary-300);
+  border-color: var(--gray-700);
+  transform: translateY(-2px);
+}

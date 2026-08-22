@@ -1,0 +1,366 @@
+/* ../acrx/assets/css/ad-regf.css */
+/* =========================
+   ACROXA SETUP WIZARD THEME
+   Uses: --color-primary-*  --gray-*  --text-color
+   ========================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s var(--ease-spring, cubic-bezier(0.25, 0.8, 0.25, 1));
+}
+
+body {
+  background: var(--color-primary-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--text-color);
+}
+
+main {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ---------- Form Container ---------- */
+.form {
+  width: 100%;
+  max-width: 800px;
+  padding: 35px 28px;
+  border-radius: 16px;
+  background: var(--color-primary-100);
+  border: 1px solid var(--gray-300);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* ---------- Branding ---------- */
+.branding {
+  font-family: "Lobster", sans-serif;
+  font-size: 42px;
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Step Navigation ---------- */
+.nav-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 90%;
+  margin-bottom: 25px;
+}
+.nav-steps div {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  color: var(--gray-600);
+  background: var(--color-primary-200);
+  padding: 10px;
+  border-radius: 10px;
+  margin: 0 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.nav-steps div.active {
+  background: var(--color-primary-400);
+  color: #fff;
+  box-shadow: 0 3px 10px var(--color-primary-400);
+}
+
+/* ---------- Steps ---------- */
+.step {
+  display: none;
+  width: 100%;
+}
+.step.active {
+  display: block;
+  animation: fadeIn 0.25s ease;
+}
+.step h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: var(--color-primary-700);
+}
+.step p {
+  margin: 8px 0 5px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 25px;
+  border: 1px solid var(--gray-300);
+  background: var(--gray-100);
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  outline: none;
+}
+input:focus {
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-50);
+}
+input[type="file"]{
+  display: none;
+}
+/* ---------- File Drop ---------- */
+.file-drop {
+  border: 2px dashed var(--gray-400);
+  border-radius: 14px;
+  background: var(--gray-100);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--gray-600);
+  margin-bottom: 15px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.file-drop i {
+  font-size: 36px;
+  color: var(--color-primary-500);
+  margin-bottom: 8px;
+}
+.file-drop.dragover {
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-50);
+}
+.file-drop img.preview {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-top: 10px;
+}
+
+/* ---------- Dropdown ---------- */
+.pp-dropdown {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.pp-dropdown-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 25px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+  color: var(--text-color);
+}
+.pp-dropdown-toggle:hover {
+  background: var(--color-primary-50);
+}
+.pp-dropdown-menu {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  display: none;
+  flex-direction: column;
+  z-index: var(--z-dropdown, 100);
+}
+.pp-dropdown-menu.active { display: flex; animation: fadeIn 0.25s ease; }
+.pp-dropdown-item {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  text-align: left;
+}
+.pp-dropdown-item:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+/* ---------- Buttons ---------- */
+.fg-b {
+  background: var(--color-primary-500);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+.fg-b:hover {
+  background: var(--color-primary-400);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+.d-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+/* Toast */
+.toast {
+  background: white;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 300px;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s ease;
+  border-left: 4px solid #3498db;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.hiding {
+  opacity: 0;
+  transform: translateX(400px);
+}
+
+/* Toast Types */
+.toast.success {
+  border-left-color: #27ae60;
+}
+
+.toast.error {
+  border-left-color: #e74c3c;
+}
+
+.toast.warning {
+  border-left-color: #f39c12;
+}
+
+.toast.info {
+  border-left-color: #3498db;
+}
+
+/* Toast Icon */
+.toast-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.toast.success .toast-icon {
+  color: #27ae60;
+}
+
+.toast.error .toast-icon {
+  color: #e74c3c;
+}
+
+.toast.warning .toast-icon {
+  color: #f39c12;
+}
+
+.toast.info .toast-icon {
+  color: #3498db;
+}
+
+/* Toast Body */
+.toast-body {
+  flex: 1;
+  color: #2c3e50;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+/* Toast Close Button */
+.toast-close {
+  background: none;
+  border: none;
+  color: #95a5a6;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toast-container {
+    left: 20px;
+    right: 20px;
+    max-width: none;
+  }
+  
+  .toast {
+    min-width: auto;
+  }
+}

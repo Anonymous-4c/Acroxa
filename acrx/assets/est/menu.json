@@ -1,0 +1,115 @@
+{
+  "main": [
+    { "label": "Dashboard", "link": "/acrx/dashboard", "icon": "grid-2", "allowedRoles": ["admin", "editor", "author"] },
+    { "label": "Insights", "link": "/acrx/analytics", "icon": "chart-line", "allowedRoles": ["admin", "editor"] },
+    { "label": "Reach", "link": "/acrx/seo", "icon": "signal", "allowedRoles": ["admin", "seo"] },
+    { "label": "Performance", "link": "/acrx/speed", "icon": "gauge-high", "allowedRoles": ["admin"] },
+    { "label": "Users", "link": "/acrx/users", "icon": "user-group", "allowedRoles": ["admin"] },
+
+    {
+      "label": "Content",
+      "link": "/acrx/posts",
+      "icon": "pen-to-square",
+      "allowedRoles": ["admin", "editor", "author"],
+      "submenu": [
+        { "label": "All Content", "link": "/acrx/posts", "allowedRoles": ["admin", "editor"] },
+        { "label": "New Post", "link": "/acrx/posts/new", "allowedRoles": ["admin", "editor", "author"] },
+        { "label": "Topics", "link": "/acrx/categories", "allowedRoles": ["admin", "editor"] },
+        { "label": "Tags", "link": "/acrx/tags", "allowedRoles": ["admin", "editor"] },
+        { "label": "Drafts", "link": "/acrx/posts/drafts", "allowedRoles": ["admin", "editor", "author"] },
+        { "label": "Scheduled", "link": "/acrx/posts/scheduled", "allowedRoles": ["admin", "editor"] },
+        { "label": "Trash", "link": "/acrx/posts/trash", "allowedRoles": ["admin"] }
+      ]
+    },
+
+    {
+      "label": "Pages",
+      "link": "/acrx/pages",
+      "icon": "file-lines",
+      "allowedRoles": ["admin", "editor"],
+      "submenu": [
+        { "label": "All Pages", "link": "/acrx/pages", "allowedRoles": ["admin", "editor"] },
+        { "label": "Add New", "link": "/acrx/pages/new", "allowedRoles": ["admin", "editor"] },
+        { "label": "Layouts", "link": "/acrx/pages/layouts", "allowedRoles": ["admin"] },
+        { "label": "Templates", "link": "/acrx/pages/templates", "allowedRoles": ["admin"] },
+        { "label": "Landing Builder", "link": "/acrx/pages/builder", "allowedRoles": ["admin"] }
+      ]
+    },
+
+    {
+      "label": "Media Hub",
+      "link": "/acrx/media",
+      "icon": "photo-film",
+      "allowedRoles": ["admin", "editor", "author"],
+      "submenu": [
+        { "label": "Library", "link": "/acrx/media", "allowedRoles": ["admin", "editor", "author"] },
+        { "label": "Upload Files", "link": "/acrx/media/upload", "allowedRoles": ["admin", "editor"] },
+        { "label": "Optimize", "link": "/acrx/media/optimize", "allowedRoles": ["admin"] },
+        { "label": "AI Enhance", "link": "/acrx/media/ai-enhance", "allowedRoles": ["admin", "editor"] },
+        { "label": "BG Remover", "link": "/acrx/media/bg-remove", "allowedRoles": ["admin"] }
+      ]
+    },
+
+    {
+      "label": "Design",
+      "link": "/acrx/layouts",
+      "icon": "palette",
+      "allowedRoles": ["admin", "designer"],
+      "submenu": [
+        { "label": "Layouts", "link": "/acrx/layouts", "allowedRoles": ["admin", "designer"] },
+        { "label": "Customize", "link": "/acrx/layouts/customize", "allowedRoles": ["admin", "designer"] },
+        { "label": "File Editor", "link": "/acrx/layouts/edit", "allowedRoles": ["admin", "developer"] },
+        { "label": "Components", "link": "/acrx/layouts/widgets", "allowedRoles": ["admin", "designer"] },
+        { "label": "Menus", "link": "/acrx/layouts/Menus", "allowedRoles": ["admin", "designer", "editor", "developer"] },
+        { "label": "Animations", "link": "/acrx/layouts/animations", "allowedRoles": ["admin", "designer"] },
+        { "label": "Fonts & Icons", "link": "/acrx/layouts/fonts", "allowedRoles": ["admin", "designer"] }
+      ]
+    },
+
+    {
+      "label": "Extensions",
+      "link": "/acrx/extensions",
+      "icon": "puzzle-piece",
+      "allowedRoles": ["admin", "developer"],
+      "submenu": [
+        { "label": "Installed", "link": "/acrx/extensions", "allowedRoles": ["admin", "developer"] },
+        { "label": "Marketplace", "link": "/acrx/extension/discover", "allowedRoles": ["admin", "developer"] },
+        { "label": "Developer Mode", "link": "/acrx/extension/dev", "allowedRoles": ["admin","developer"] },
+        { "label": "APIs", "link": "/acrx/extension/api", "allowedRoles": ["admin","developer"] },
+        { "label": "Beta Labs", "link": "/acrx/extension/labs", "allowedRoles": ["admin", "developer"] }
+      ]
+    },
+
+    {
+      "label": "System",
+      "link": "/acrx/system",
+      "icon": "sliders",
+      "allowedRoles": ["admin"],
+      "submenu": [
+        { "label": "System", "link": "/acrx/system", "allowedRoles": ["admin"] },
+        { "label": "General", "link": "/acrx/system/general", "allowedRoles": ["admin"] },
+        { "label": "Localization", "link": "/acrx/system/localization", "allowedRoles": ["admin"] },
+        { "label": "Routing", "link": "/acrx/system/routing", "allowedRoles": ["admin"] },
+        { "label": "Content", "link": "/acrx/system/content", "allowedRoles": ["admin"] },
+        { "label": "SEO", "link": "/acrx/system/seo", "allowedRoles": ["admin"] },
+        { "label": "AI Settings", "link": "/acrx/system/ai", "allowedRoles": ["admin"] },
+        { "label": "Security", "link": "/acrx/system/security", "allowedRoles": ["admin"] },
+        { "label": "API", "link": "/acrx/system/api", "allowedRoles": ["admin"] },
+        { "label": "Analytics", "link": "/acrx/system/analytics", "allowedRoles": ["admin"] },
+        { "label": "Backups", "link": "/acrx/system/backups", "allowedRoles": ["admin"] },
+        { "label": "Logs", "link": "/acrx/system/logs", "allowedRoles": ["admin"] },
+        { "label": "Maintenance", "link": "/acrx/system/maintenance", "allowedRoles": ["admin"] },
+        { "label": "Advanced", "link": "/acrx/system/advanced", "allowedRoles": ["admin"] }
+      ]
+    }
+  ],
+
+"extra": [
+  { "label": "Help Center", "link": "/acrx/help", "icon": "circle-question", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] },
+  { "label": "Documentation", "link": "https://docs.acroxa.com", "icon": "book", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] },
+  { "label": "Feedback", "link": "/acrx/feedback", "icon": "message-dots", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] },
+  { "label": "System Status", "link": "/acrx/status", "icon": "signal-bars", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] },
+  { "label": "Version Notes", "link": "/acrx/changelog", "icon": "scroll", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] },
+  { "label": "About Acroxa", "link": "/acrx/about", "icon": "gem", "allowedRoles": ["admin", "editor", "author", "seo", "designer", "developer"] }
+]
+}

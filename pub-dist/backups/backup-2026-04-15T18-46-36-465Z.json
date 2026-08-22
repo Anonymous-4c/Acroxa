@@ -1,0 +1,696 @@
+{
+  "meta": {
+    "version": "1.0",
+    "timestamp": "2026-04-15T18:46:36.465Z",
+    "cms": "Acroxa",
+    "providers": [
+      "users",
+      "posts",
+      "pages",
+      "categories",
+      "media"
+    ],
+    "includeMedia": true,
+    "recordCounts": {
+      "users": 0,
+      "posts": 3,
+      "pages": 1,
+      "categories": 4,
+      "media": 56
+    }
+  },
+  "settings": {
+    "general": {
+      "siteName": "Acroxa",
+      "siteTagline": "Acroxa THe innovation in Web Industry",
+      "siteDescription": "",
+      "siteLogo": "",
+      "siteFavicon": "",
+      "siteURL": "",
+      "adminEmail": ""
+    },
+    "localization": {
+      "language": "en",
+      "timezone": "UTC",
+      "dateFormat": "DD/MM/YYYY",
+      "timeFormat": "24h",
+      "currency": "USD"
+    },
+    "system": {
+      "maintenanceMode": true,
+      "registrationEnabled": true,
+      "defaultUserRole": "user",
+      "contentModerationRequired": false,
+      "autoSaveInterval": 30,
+      "paginationLimit": 10
+    },
+    "security": {
+      "passwordPolicy": {
+        "minLength": 8,
+        "requireNumbers": true,
+        "requireSymbols": false,
+        "requireUppercase": true
+      },
+      "loginAttemptsLimit": 5,
+      "sessionTimeout": 3600,
+      "twoFactorEnabled": false,
+      "allowedIPs": [],
+      "corsOrigins": [
+        "*"
+      ]
+    },
+    "appearance": {
+      "defaultTheme": "light",
+      "primaryColor": "#007bff",
+      "fontFamily": "Inter, sans-serif",
+      "layoutStyle": "grid",
+      "borderRadius": "medium",
+      "enableGlass": false,
+      "enableShadows": true,
+      "animation": "fade",
+      "customCSS": "",
+      "customJS": ""
+    },
+    "api": {
+      "thirdPartyKeys": {
+        "googleAnalytics": "",
+        "stripe": "",
+        "openai": "",
+        "gemini": ""
+      },
+      "apiEnabled": true,
+      "apiRateLimit": 100,
+      "webhookURLs": []
+    },
+    "plugins": {
+      "enabledPlugins": [],
+      "pluginAutoUpdate": true
+    },
+    "content": {
+      "imageOptimization": {
+        "enabled": true,
+        "quality": 80,
+        "formats": [
+          "webp"
+        ]
+      },
+      "versioning": {
+        "enabled": true,
+        "maxRevisions": 10
+      },
+      "autosave": {
+        "enabled": true,
+        "interval": 30
+      },
+      "defaultPostStatus": "published",
+      "allowComments": true,
+      "postsPerPage": 10,
+      "uploadStrategy": "auto",
+      "storageDriver": "cloudinary",
+      "autoOrganizeMedia": true,
+      "mediaNaming": "original"
+    },
+    "seo": {
+      "openGraph": {
+        "enabled": true,
+        "defaultImage": ""
+      },
+      "twitterCards": {
+        "enabled": true,
+        "siteHandle": ""
+      },
+      "schemaMarkup": {
+        "enabled": true,
+        "type": "WebSite"
+      },
+      "metaTitle": "",
+      "metaDescription": "",
+      "metaKeywords": "",
+      "enableSitemap": true,
+      "enableRobotsTxt": true,
+      "canonicalURL": true
+    },
+    "analytics": {
+      "analyticsEnabled": true,
+      "trackingID": "",
+      "cookieConsentRequired": true
+    },
+    "ai": {
+      "providers": {
+        "openai": {
+          "apiKey": "",
+          "model": "gpt-4o-mini",
+          "enabled": true
+        },
+        "gemini": {
+          "apiKey": "",
+          "model": "gemini-1.5-pro",
+          "enabled": false
+        },
+        "custom": {
+          "endpoint": "",
+          "apiKey": ""
+        }
+      },
+      "features": {
+        "contentSuggestions": true,
+        "seoSuggestions": true,
+        "autoTitleGeneration": true,
+        "autoDescriptionGeneration": true,
+        "chatAssistant": true
+      },
+      "enabled": true,
+      "defaultProvider": "openai"
+    },
+    "advanced": {
+      "debugMode": false,
+      "logLevel": "info",
+      "cacheEnabled": true,
+      "cacheTTL": 3600,
+      "cdnURL": "",
+      "environment": "production"
+    },
+    "backupPolicy": {
+      "schedule": {
+        "interval": "daily",
+        "time": "02:00",
+        "customInterval": 0
+      },
+      "targets": {
+        "local": true,
+        "git": false,
+        "cloud": false
+      },
+      "git": {
+        "repoURL": "",
+        "branch": "main",
+        "token": "",
+        "authorName": "Acroxa CMS",
+        "authorEmail": "cms@acroxa.io"
+      },
+      "cloud": {
+        "provider": "",
+        "bucket": "",
+        "region": "",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "endpoint": ""
+      },
+      "enabled": false,
+      "includeMedia": false
+    },
+    "createdAt": "2026-04-15T17:27:17.060Z",
+    "updatedAt": "2026-04-15T18:38:29.269Z",
+    "id": "69dfca75352520f6e07402bd"
+  },
+  "data": {
+    "users": [],
+    "posts": [
+      {
+        "_id": "693903932bfd7958cf6a7eda",
+        "title": "Welcome to alpha - Acroxa CMS Alpha",
+        "slug": "welcome-to-acroxa-cms-alpha",
+        "content": "<h1>🎉 Welcome to Acroxa CMS Alpha!</h1>\n        <p>Congratulations on setting up your new Acroxa CMS installation!</p>\n        <p>This is your first post. You can edit or delete it from the admin dashboard.</p>",
+        "excerpt": "Welcome to your new alpha powered by Acroxa CMS Alpha.",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [
+          "693903922bfd7958cf6a7ed4"
+        ],
+        "status": "published",
+        "publishDate": "2025-12-10T05:22:27.366Z",
+        "metaTitle": "Welcome to alpha - Acroxa CMS",
+        "metaDescription": "Get started with Acroxa CMS",
+        "focusKeyword": "acroxa cms",
+        "keywords": [
+          "acroxa",
+          "cms",
+          "welcome"
+        ],
+        "isPillarContent": true,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2025-12-10T05:22:27.369Z",
+        "updatedAt": "2025-12-10T05:22:28.406Z",
+        "__v": 1
+      },
+      {
+        "_id": "693d1eb358e6f4f1205ad1d7",
+        "title": "Untitled",
+        "slug": "untitled",
+        "content": "<div contenteditable=\"true\" class=\"editor-widget\" data-widget-type=\"Facebook\" tabindex=\"0\" role=\"article\" aria-label=\"Facebook widget\">Facebook Widget</div>",
+        "excerpt": "",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [],
+        "tags": [],
+        "status": "draft",
+        "publishDate": "2025-12-13T08:07:15.411Z",
+        "publishAt": null,
+        "featuredImage": "",
+        "featuredImageAlt": "",
+        "metaTitle": "Untitled",
+        "metaDescription": "",
+        "focusKeyword": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "ogTitle": "Untitled",
+        "ogDescription": "",
+        "ogImage": "",
+        "isPillarContent": false,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2025-12-13T08:07:15.432Z",
+        "updatedAt": "2025-12-13T08:07:15.432Z",
+        "__v": 0
+      },
+      {
+        "_id": "69c4fd1abd7eb2628ba3f7a2",
+        "title": "Welcome to Our Announcements Se",
+        "slug": "welcome-to-our-announcements-se",
+        "content": "\n        <p>This is a dummy announcement post created automatically for testing purposes in Acroxa CMS.</p>\n        <p>It demonstrates the full createPost functionality with Mongoose models.</p>\n       \n        <h2>Key Features Tested</h2>\n        <ul>\n          <li>Author as real ObjectId (from logged-in user)</li>\n          <li>Categories as real ObjectId array</li>\n          <li>SEO fields and Open Graph tags</li>\n          <li>Reading time calculation (via pre-save hook)</li>\n          <li>Published status with current date</li>\n        </ul>\n      ",
+        "excerpt": "This is a test announcement post created automatically via JavaScript for Acroxa CMS.",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [
+          "693903922bfd7958cf6a7ed4"
+        ],
+        "tags": [],
+        "status": "published",
+        "publishDate": "2026-03-26T09:32:10.313Z",
+        "publishAt": null,
+        "featuredImage": "https://picsum.photos/id/1015/1200/630",
+        "featuredImageAlt": "Official Announcement",
+        "metaTitle": "Latest Announcements | Acroxa CMS",
+        "metaDescription": "Stay updated with the latest official announcements and updates from Acroxa CMS.",
+        "focusKeyword": "announcements",
+        "keywords": [
+          "announcements",
+          "news",
+          "updates",
+          "acroxa",
+          "official"
+        ],
+        "canonicalUrl": "",
+        "ogTitle": "New Announcement Posted - Acroxa CMS",
+        "ogDescription": "Check out our latest official announcement from the Acroxa team.",
+        "ogImage": "https://picsum.photos/id/1015/1200/630",
+        "seoReport": {
+          "score": 88,
+          "scoreParts": {
+            "readability": 92,
+            "seo": 85,
+            "performance": 87
+          },
+          "suggestions": [
+            "Consider adding internal links",
+            "Add more images with alt text"
+          ],
+          "wordCount": 285
+        },
+        "isPillarContent": false,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2026-03-26T09:32:10.355Z",
+        "updatedAt": "2026-03-26T10:41:24.277Z",
+        "__v": 0
+      }
+    ],
+    "pages": [
+      {
+        "_id": "693903952bfd7958cf6a7edd",
+        "title": "Home",
+        "slug": "home",
+        "content": "<div style=\"text-align: center; padding: 2rem;\">\n          <h1>Welcome to alpha</h1>\n          <p>Powered by Acroxa CMS Alpha</p>\n        </div>",
+        "status": "published",
+        "template": "home",
+        "parent": null,
+        "order": 1,
+        "showInMenu": true,
+        "author": "693903902bfd7958cf6a7ed2",
+        "metaTitle": "alpha - Home",
+        "metaDescription": "Welcome to alpha, powered by Acroxa CMS.",
+        "keywords": [],
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "createdAt": "2025-12-10T05:22:29.264Z",
+        "updatedAt": "2025-12-10T05:22:29.264Z",
+        "__v": 0
+      }
+    ],
+    "categories": [
+      {
+        "_id": "693903922bfd7958cf6a7ed4",
+        "name": "Announcements",
+        "slug": "announcements",
+        "description": "Official announcements and updates from Acroxa CMS",
+        "color": "#4F46E5",
+        "parent": null,
+        "deletable": false,
+        "keywords": [],
+        "order": 1,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.055Z",
+        "updatedAt": "2025-12-10T05:22:26.055Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed5",
+        "name": "Tutorials",
+        "slug": "tutorials",
+        "description": "Learn how to make the most of Acroxa CMS",
+        "color": "#10B981",
+        "parent": null,
+        "deletable": true,
+        "keywords": [],
+        "order": 2,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed6",
+        "name": "General",
+        "slug": "general",
+        "description": "General posts and articles",
+        "color": "#6B7280",
+        "parent": null,
+        "deletable": true,
+        "keywords": [],
+        "order": 3,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed7",
+        "name": "Uncategorized",
+        "slug": "uncategorized",
+        "description": "Default category for uncategorized content",
+        "color": "#9CA3AF",
+        "parent": null,
+        "deletable": false,
+        "keywords": [],
+        "order": 4,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      }
+    ],
+    "media": [
+      {
+        "filename": "1318771.jpeg",
+        "path": "pub-dist\\uploads\\1318771.jpeg",
+        "size": 4048892
+      },
+      {
+        "filename": "1669994978_windows_12_concept_moreDetail_8k_8192x4607.png",
+        "path": "pub-dist\\uploads\\1669994978_windows_12_concept_moreDetail_8k_8192x4607.png",
+        "size": 40871095
+      },
+      {
+        "filename": "abstract-windows12-logo-design-82rcsgtc8lp581ki.jpg",
+        "path": "pub-dist\\uploads\\abstract-windows12-logo-design-82rcsgtc8lp581ki.jpg",
+        "size": 26119
+      },
+      {
+        "filename": "Abstraction.jpg",
+        "path": "pub-dist\\uploads\\Abstraction.jpg",
+        "size": 6265023
+      },
+      {
+        "filename": "abstract_minimalist_design-wallpaper-5120x2880.jpg",
+        "path": "pub-dist\\uploads\\abstract_minimalist_design-wallpaper-5120x2880.jpg",
+        "size": 2144462
+      },
+      {
+        "filename": "Alok___Alan_Walker_-_Headlights__feat._KIDDO__Official_Lyric_Video256k.mp3",
+        "path": "pub-dist\\uploads\\Alok___Alan_Walker_-_Headlights__feat._KIDDO__Official_Lyric_Video256k.mp3",
+        "size": 2588972
+      },
+      {
+        "filename": "alpha.mp3",
+        "path": "pub-dist\\uploads\\alpha.mp3",
+        "size": 2942162
+      },
+      {
+        "filename": "bluish-cyan-pastel-3840x2160-20122.jpg",
+        "path": "pub-dist\\uploads\\bluish-cyan-pastel-3840x2160-20122.jpg",
+        "size": 1055487
+      },
+      {
+        "filename": "brown-wooden-dock.jpg",
+        "path": "pub-dist\\uploads\\brown-wooden-dock.jpg",
+        "size": 4081074
+      },
+      {
+        "filename": "di94hv4-d966f670-92a0-49b7-9671-4fbcde8fb384.png",
+        "path": "pub-dist\\uploads\\di94hv4-d966f670-92a0-49b7-9671-4fbcde8fb384.png",
+        "size": 1199302
+      },
+      {
+        "filename": "drawing - Copy.svg",
+        "path": "pub-dist\\uploads\\drawing - Copy.svg",
+        "size": 7414
+      },
+      {
+        "filename": "generated-image.png",
+        "path": "pub-dist\\uploads\\generated-image.png",
+        "size": 1177867
+      },
+      {
+        "filename": "golden-diamond-3840x2160-19354.jpg",
+        "path": "pub-dist\\uploads\\golden-diamond-3840x2160-19354.jpg",
+        "size": 1305582
+      },
+      {
+        "filename": "HD-wallpaper-windows-11-dark-ultra-windows-gold (1) (1).jpg",
+        "path": "pub-dist\\uploads\\HD-wallpaper-windows-11-dark-ultra-windows-gold (1) (1).jpg",
+        "size": 1477190
+      },
+      {
+        "filename": "HD-wallpaper-windows-11-dark-ultra-windows-gold (1).jpg",
+        "path": "pub-dist\\uploads\\HD-wallpaper-windows-11-dark-ultra-windows-gold (1).jpg",
+        "size": 969775
+      },
+      {
+        "filename": "HD-wallpaper-windows-11-dark-ultra-windows-gold.jpg",
+        "path": "pub-dist\\uploads\\HD-wallpaper-windows-11-dark-ultra-windows-gold.jpg",
+        "size": 35531
+      },
+      {
+        "filename": "honeycomb-hexagons-3840x2160-15320.jpg",
+        "path": "pub-dist\\uploads\\honeycomb-hexagons-3840x2160-15320.jpg",
+        "size": 933845
+      },
+      {
+        "filename": "lenovo-tab-p11-pro-abstract-background-stock-2560x2560-9022.png",
+        "path": "pub-dist\\uploads\\lenovo-tab-p11-pro-abstract-background-stock-2560x2560-9022.png",
+        "size": 2687088
+      },
+      {
+        "filename": "maxresdefault (1) (1).jpg",
+        "path": "pub-dist\\uploads\\maxresdefault (1) (1).jpg",
+        "size": 4501175
+      },
+      {
+        "filename": "maxresdefault.jpg",
+        "path": "pub-dist\\uploads\\maxresdefault.jpg",
+        "size": 574777
+      },
+      {
+        "filename": "Oh Love, Heâs Not Safe [Kh53CH2Satc].mp3",
+        "path": "pub-dist\\uploads\\Oh Love, Heâs Not Safe [Kh53CH2Satc].mp3",
+        "size": 3793953
+      },
+      {
+        "filename": "pexels-andiravsanjani-1915182.jpg",
+        "path": "pub-dist\\uploads\\pexels-andiravsanjani-1915182.jpg",
+        "size": 1556537
+      },
+      {
+        "filename": "pexels-camille-cox-30357801-7093148.jpg",
+        "path": "pub-dist\\uploads\\pexels-camille-cox-30357801-7093148.jpg",
+        "size": 876430
+      },
+      {
+        "filename": "pexels-eric-hammett-1223870-2741576.jpg",
+        "path": "pub-dist\\uploads\\pexels-eric-hammett-1223870-2741576.jpg",
+        "size": 993566
+      },
+      {
+        "filename": "pexels-francesco-ungaro-1671325.jpg",
+        "path": "pub-dist\\uploads\\pexels-francesco-ungaro-1671325.jpg",
+        "size": 1578936
+      },
+      {
+        "filename": "pexels-garret-shields-1929773013-29043801.jpg",
+        "path": "pub-dist\\uploads\\pexels-garret-shields-1929773013-29043801.jpg",
+        "size": 1984500
+      },
+      {
+        "filename": "pexels-iriser-1122639.jpg",
+        "path": "pub-dist\\uploads\\pexels-iriser-1122639.jpg",
+        "size": 1266106
+      },
+      {
+        "filename": "pexels-martin-mariani-2162253-3801458.jpg",
+        "path": "pub-dist\\uploads\\pexels-martin-mariani-2162253-3801458.jpg",
+        "size": 3348932
+      },
+      {
+        "filename": "pexels-matthew-ang-52745-1327786.jpg",
+        "path": "pub-dist\\uploads\\pexels-matthew-ang-52745-1327786.jpg",
+        "size": 1379089
+      },
+      {
+        "filename": "pexels-pixabay-33696.jpg",
+        "path": "pub-dist\\uploads\\pexels-pixabay-33696.jpg",
+        "size": 399741
+      },
+      {
+        "filename": "pexels-raulling-34169561.jpg",
+        "path": "pub-dist\\uploads\\pexels-raulling-34169561.jpg",
+        "size": 1506122
+      },
+      {
+        "filename": "pexels-slendyalex-3888585.jpg",
+        "path": "pub-dist\\uploads\\pexels-slendyalex-3888585.jpg",
+        "size": 390817
+      },
+      {
+        "filename": "pexels-tobiasbjorkli-1693095.jpg",
+        "path": "pub-dist\\uploads\\pexels-tobiasbjorkli-1693095.jpg",
+        "size": 1455144
+      },
+      {
+        "filename": "pexels-webbshow-2406397.jpg",
+        "path": "pub-dist\\uploads\\pexels-webbshow-2406397.jpg",
+        "size": 445347
+      },
+      {
+        "filename": "photo-1680128369855-2415f3ea7f76.jpg",
+        "path": "pub-dist\\uploads\\photo-1680128369855-2415f3ea7f76.jpg",
+        "size": 125361
+      },
+      {
+        "filename": "photo-1702539336564-b37d0f3276e7.jpeg",
+        "path": "pub-dist\\uploads\\photo-1702539336564-b37d0f3276e7.jpeg",
+        "size": 170442
+      },
+      {
+        "filename": "Picture2-Photoroom.png",
+        "path": "pub-dist\\uploads\\Picture2-Photoroom.png",
+        "size": 424912
+      },
+      {
+        "filename": "prediction-of-windows-12s-proposed-wallpapers-v0-vkrokfmoujwa1.png",
+        "path": "pub-dist\\uploads\\prediction-of-windows-12s-proposed-wallpapers-v0-vkrokfmoujwa1.png",
+        "size": 3340288
+      },
+      {
+        "filename": "processed-audio.wav",
+        "path": "pub-dist\\uploads\\processed-audio.wav",
+        "size": 4958741
+      },
+      {
+        "filename": "rog-neon-light-logo-uhdpaper.com-8K-3.3153-wp.thumbnail.jpg",
+        "path": "pub-dist\\uploads\\rog-neon-light-logo-uhdpaper.com-8K-3.3153-wp.thumbnail.jpg",
+        "size": 116581
+      },
+      {
+        "filename": "Screenshot 2025-06-03 114339.png",
+        "path": "pub-dist\\uploads\\Screenshot 2025-06-03 114339.png",
+        "size": 205008
+      },
+      {
+        "filename": "Screenshot 2025-06-03 114421.png",
+        "path": "pub-dist\\uploads\\Screenshot 2025-06-03 114421.png",
+        "size": 210532
+      },
+      {
+        "filename": "Shapes-Dark - Copy.png",
+        "path": "pub-dist\\uploads\\Shapes-Dark - Copy.png",
+        "size": 441870
+      },
+      {
+        "filename": "Shapes-Dark.png",
+        "path": "pub-dist\\uploads\\Shapes-Dark.png",
+        "size": 441870
+      },
+      {
+        "filename": "Sua Amiga Vou Pegar (Slowed Reverb) (1).mp3",
+        "path": "pub-dist\\uploads\\Sua Amiga Vou Pegar (Slowed Reverb) (1).mp3",
+        "size": 3207289
+      },
+      {
+        "filename": "tecno-stock-3840x2160-14030.jpg",
+        "path": "pub-dist\\uploads\\tecno-stock-3840x2160-14030.jpg",
+        "size": 1745610
+      },
+      {
+        "filename": "VIDEOGAME ALUCINANTE (Slowed + Reverb).mp3",
+        "path": "pub-dist\\uploads\\VIDEOGAME ALUCINANTE (Slowed + Reverb).mp3",
+        "size": 4044309
+      },
+      {
+        "filename": "Vt84y2Lg4Pgpkkqk7VMLLa.jpg",
+        "path": "pub-dist\\uploads\\Vt84y2Lg4Pgpkkqk7VMLLa.jpg",
+        "size": 850888
+      },
+      {
+        "filename": "Windows 11 (1).png",
+        "path": "pub-dist\\uploads\\Windows 11 (1).png",
+        "size": 10615705
+      },
+      {
+        "filename": "Windows 11.png",
+        "path": "pub-dist\\uploads\\Windows 11.png",
+        "size": 8993842
+      },
+      {
+        "filename": "Windows 12.jpg",
+        "path": "pub-dist\\uploads\\Windows 12.jpg",
+        "size": 594998
+      },
+      {
+        "filename": "windows-11-dynamic-3840x2160-18741.png",
+        "path": "pub-dist\\uploads\\windows-11-dynamic-3840x2160-18741.png",
+        "size": 5300224
+      },
+      {
+        "filename": "wwdc-glowing-violet-3840x2160-19118 - Copy.png",
+        "path": "pub-dist\\uploads\\wwdc-glowing-violet-3840x2160-19118 - Copy.png",
+        "size": 3594694
+      },
+      {
+        "filename": "wwdc-glowing-violet-3840x2160-19118.png",
+        "path": "pub-dist\\uploads\\wwdc-glowing-violet-3840x2160-19118.png",
+        "size": 3717108
+      },
+      {
+        "filename": "yt1z.net - Batmana Ansak (Remix) New Trend Music Instagram (320 KBps).mp3",
+        "path": "pub-dist\\uploads\\yt1z.net - Batmana Ansak (Remix) New Trend Music Instagram (320 KBps).mp3",
+        "size": 8729435
+      },
+      {
+        "filename": "YTDown.com_YouTube_Glass-Animals-Heat-Waves-Slowed-Lyrics_Media_BhUthi9HGjg_009_128k.mp3",
+        "path": "pub-dist\\uploads\\YTDown.com_YouTube_Glass-Animals-Heat-Waves-Slowed-Lyrics_Media_BhUthi9HGjg_009_128k.mp3",
+        "size": 4538903
+      }
+    ]
+  }
+}

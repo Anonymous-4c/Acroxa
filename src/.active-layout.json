@@ -1,0 +1,340 @@
+{
+  "id": "rainfall_grove",
+  "meta": {
+    "name": "Rainfall Grove",
+    "version": "1.0.0",
+    "description": "An immersive atmospheric layout — misty forests, cinematic depth layers, and premium parallax storytelling for content brands that want to feel alive.",
+    "preview": "/preview/screenshot.png",
+    "author": {
+      "name": "Acroxa",
+      "url": "https://www.acroxa.com"
+    },
+    "stylesheets": [
+      "/layouts/framework/reset.css",
+      "/layouts/framework/variables.css",
+      "/layouts/framework/typography.css",
+      "/layouts/framework/components.css",
+      "/layouts/framework/utilities.css",
+      "/layouts/framework/layout-grid.css",
+      "/layouts/framework/layout-flex.css",
+      "/layouts/framework/animations.css",
+      "/layouts/framework/filter-effects.css",
+      "/layouts/framework/responsive.css",
+      "/layouts/rainfall_grove/theme.css"
+    ],
+    "scripts": [
+      {
+        "url": "/layouts/rainfall_grove/assets/parallax.js",
+        "location": "body"
+      }
+    ],
+    "customStyles": "",
+    "customScripts": "document.addEventListener('DOMContentLoaded',function(){var t=document.getElementById('rg-menu-toggle'),p=document.getElementById('rg-mobile-nav');if(t&&p){t.addEventListener('click',function(){var o=p.classList.toggle('is-open');p.hidden=!o;t.setAttribute('aria-expanded',o?'true':'false');});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&p.classList.contains('is-open')){p.classList.remove('is-open');p.hidden=true;t.setAttribute('aria-expanded','false');}});}var h=document.querySelector('.rg-header');if(h){var threshold=80;window.addEventListener('scroll',function(){h.classList.toggle('is-scrolled',window.scrollY>threshold);},{passive:true});}});",
+    "templates": {
+      "404": "404",
+      "homepage": "homepage",
+      "blog": "blog",
+      "post": "post",
+      "page": "page",
+      "category": "category",
+      "landing": "page"
+    },
+    "widgetAreas": [
+      "sidebar",
+      "footer-col-1",
+      "footer-col-2",
+      "footer-col-3"
+    ],
+    "menuAreas": [
+      "primary",
+      "footer"
+    ],
+    "config": {
+      "layout": {
+        "sidebar": {
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "label": "Enable Sidebar"
+          },
+          "position": {
+            "type": "select",
+            "default": "right",
+            "label": "Sidebar position",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "width": {
+            "type": "text",
+            "default": "320px",
+            "label": "Sidebar width",
+            "placeholder": "e.g. 320px"
+          },
+          "show_on_homepage": {
+            "type": "boolean",
+            "default": false,
+            "label": "Show sidebar on homepage"
+          },
+          "show_on_pages": {
+            "type": "boolean",
+            "default": true,
+            "label": "Show on pages & blog"
+          },
+          "show_on_posts": {
+            "type": "boolean",
+            "default": true,
+            "label": "Show on posts"
+          }
+        },
+        "containerWidth": {
+          "type": "select",
+          "default": "medium",
+          "label": "Container width",
+          "options": [
+            "small",
+            "medium",
+            "large"
+          ]
+        },
+        "headerStyle": {
+          "type": "select",
+          "default": "transparent",
+          "label": "Header style",
+          "options": [
+            "transparent",
+            "frosted",
+            "solid"
+          ]
+        },
+        "spacingDensity": {
+          "type": "select",
+          "default": "spacious",
+          "label": "Spacing density",
+          "options": [
+            "compact",
+            "normal",
+            "spacious"
+          ]
+        },
+        "heroParallax": {
+          "type": "boolean",
+          "default": true,
+          "label": "Enable hero parallax"
+        },
+        "rainIntensity": {
+          "type": "select",
+          "default": "medium",
+          "label": "Rain particle intensity",
+          "options": [
+            "light",
+            "medium",
+            "heavy"
+          ]
+        },
+        "mistOpacity": {
+          "type": "range",
+          "default": 0.6,
+          "min": 0.2,
+          "max": 1,
+          "step": 0.05,
+          "label": "Mist opacity"
+        }
+      },
+      "colors": {
+        "primary": {
+          "type": "color",
+          "default": "#3d7a5a",
+          "label": "Primary (grove green)"
+        },
+        "secondary": {
+          "type": "color",
+          "default": "#5b8fa8",
+          "label": "Secondary (rain blue)"
+        },
+        "accent": {
+          "type": "color",
+          "default": "#7fb89e",
+          "label": "Accent (mist)"
+        },
+        "fogLight": {
+          "type": "color",
+          "default": "#e8f0ec",
+          "label": "Fog (light)"
+        },
+        "fogDark": {
+          "type": "color",
+          "default": "#0d1f18",
+          "label": "Fog (dark)"
+        },
+        "textLight": {
+          "type": "color",
+          "default": "#1a2e25",
+          "label": "Text (Light Mode)"
+        },
+        "textDark": {
+          "type": "color",
+          "default": "#d4ede2",
+          "label": "Text (Dark Mode)"
+        },
+        "bgLight": {
+          "type": "color",
+          "default": "#f0f5f2",
+          "label": "Background (Light Mode)"
+        },
+        "bgDark": {
+          "type": "color",
+          "default": "#081510",
+          "label": "Background (Dark Mode)"
+        }
+      },
+      "typography": {
+        "headingFont": {
+          "type": "text",
+          "default": "'Playfair Display', 'Georgia', serif",
+          "label": "Heading font"
+        },
+        "bodyFont": {
+          "type": "text",
+          "default": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          "label": "Body font"
+        },
+        "scale": {
+          "type": "select",
+          "default": "spacious",
+          "label": "Typography scale",
+          "options": [
+            "compact",
+            "normal",
+            "spacious"
+          ]
+        },
+        "baseFontSize": {
+          "type": "range",
+          "default": 17,
+          "min": 14,
+          "max": 20,
+          "step": 1,
+          "unit": "px",
+          "label": "Base font size"
+        }
+      },
+      "homepage": {
+        "heroEyebrow": {
+          "type": "text",
+          "default": "Welcome to the grove",
+          "label": "Hero eyebrow",
+          "showOn": "homepage"
+        },
+        "heroTitle": {
+          "type": "text",
+          "default": "Where stories take root",
+          "label": "Hero title",
+          "showOn": "homepage"
+        },
+        "heroSubtitle": {
+          "type": "textarea",
+          "default": "An immersive space for long-form writing, visual storytelling, and ideas that deserve room to breathe.",
+          "label": "Hero subtitle",
+          "showOn": "homepage"
+        },
+        "ctaPrimaryText": {
+          "type": "text",
+          "default": "Enter the grove",
+          "label": "Primary CTA text"
+        },
+        "ctaPrimaryUrl": {
+          "type": "text",
+          "default": "/blog",
+          "label": "Primary CTA URL"
+        },
+        "ctaSecondaryText": {
+          "type": "text",
+          "default": "Our story",
+          "label": "Secondary CTA text"
+        },
+        "ctaSecondaryUrl": {
+          "type": "text",
+          "default": "/page/about",
+          "label": "Secondary CTA URL"
+        },
+        "storyTitle": {
+          "type": "text",
+          "default": "A quiet place to think",
+          "label": "Story section title"
+        },
+        "storyBody": {
+          "type": "textarea",
+          "default": "In the space between the trees, clarity arrives. Rainfall Grove is built for writers and makers who believe that atmosphere shapes thought — and that the right environment can unlock the work that matters most.",
+          "label": "Story section body"
+        },
+        "showFeatures": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show features section"
+        },
+        "showParallax": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show parallax showcase"
+        },
+        "showBlogPreview": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show blog preview"
+        },
+        "blogPreviewCount": {
+          "type": "select",
+          "default": "3",
+          "label": "Blog preview count",
+          "options": [
+            "2",
+            "3",
+            "4",
+            "6"
+          ]
+        },
+        "showCta": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show closing CTA"
+        },
+        "ctaTitle": {
+          "type": "text",
+          "default": "Step into the grove",
+          "label": "CTA section title"
+        },
+        "ctaSubtitle": {
+          "type": "textarea",
+          "default": "Start reading. Start writing. Find your signal in the noise.",
+          "label": "CTA section subtitle"
+        }
+      }
+    },
+    "features": [
+      "Immersive atmospheric hero with CSS rain particles",
+      "5-layer parallax depth engine",
+      "Misty forest visual identity",
+      "Cinematic homepage storytelling",
+      "Dark-first color system with light mode support",
+      "Blog, post, page, and category templates",
+      "Scroll-triggered reveal animations",
+      "GPU-accelerated parallax transforms",
+      "Reduced-motion accessible",
+      "SSR-friendly with minimal JavaScript"
+    ],
+    "color_scheme": {
+      "primary": "#3d7a5a",
+      "secondary": "#5b8fa8",
+      "accent": "#7fb89e",
+      "fogLight": "#e8f0ec",
+      "fogDark": "#0d1f18",
+      "textLight": "#1a2e25",
+      "textDark": "#d4ede2",
+      "bgLight": "#f0f5f2",
+      "bgDark": "#081510"
+    }
+  },
+  "updatedAt": 1786511638183
+}

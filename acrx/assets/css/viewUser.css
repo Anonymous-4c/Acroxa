@@ -1,0 +1,217 @@
+/* ============================================================
+   viewUser.css — Acroxa User Detail Page
+   ============================================================ */
+
+.vu-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: .75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.vu-error i { font-size: 2.5rem; opacity: .3; }
+.vu-error p { font-size: .95rem; margin: 0; }
+
+/* ── Profile Card ──────────────────────────────────────────────────────────── */
+
+.vu-profile-card {
+  background: var(--color-primary-200);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem;
+}
+
+.vu-profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.vu-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vu-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-primary-300);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  overflow: hidden;
+  border: 3px solid var(--color-primary-200);
+}
+
+.vu-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vu-status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary-200);
+}
+
+.vu-status-dot--active   { background: var(--color-success); }
+.vu-status-dot--suspended { background: var(--color-warning); }
+.vu-status-dot--inactive  { background: var(--color-neutral); }
+
+.vu-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.vu-profile-name {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .25rem;
+}
+
+.vu-profile-name h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.vu-profile-meta {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .35rem;
+}
+
+.vu-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: var(--radius-sm, 5px);
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.vu-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .55rem;
+  border-radius: var(--radius-2xl, 20px);
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.vu-status-pill--active   { background: var(--color-success-bg); color: var(--color-success); }
+.vu-status-pill--suspended { background: var(--color-warning-bg); color: var(--color-warning); }
+.vu-status-pill--inactive  { background: var(--color-neutral-bg); color: var(--color-neutral); }
+
+.vu-sv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .15rem .45rem;
+  font-size: .65rem;
+  font-family: monospace;
+  font-weight: 600;
+  border-radius: 4px;
+  background: var(--color-primary-300);
+  color: var(--text-muted);
+}
+
+.vu-sv-bumped {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+}
+
+.vu-profile-email {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
+/* ── Grid ──────────────────────────────────────────────────────────────────── */
+
+.vu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4, 1rem);
+}
+
+.vu-section {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.vu-section-title {
+  margin: 0;
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  padding-bottom: .35rem;
+  border-bottom: 1px solid var(--color-primary-300);
+}
+
+.vu-info-card {
+  background: var(--color-primary-200);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-md, 10px);
+  padding: .75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+
+.vu-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.vu-info-label {
+  color: var(--text-muted);
+  min-width: 110px;
+  flex-shrink: 0;
+  font-size: .78rem;
+}
+
+.vu-info-value {
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.vu-info-value--muted {
+  color: var(--text-muted);
+  font-size: .72rem;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .vu-profile-header { flex-direction: column; align-items: center; text-align: center; }
+  .vu-profile-meta { justify-content: center; }
+  .vu-grid { grid-template-columns: 1fr; }
+  .vu-info-row { flex-direction: column; gap: .15rem; }
+  .vu-info-label { min-width: 0; }
+}

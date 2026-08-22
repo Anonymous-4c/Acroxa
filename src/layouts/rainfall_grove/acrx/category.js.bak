@@ -1,0 +1,52 @@
+import { eader }  from "./eader.js";
+import { footer }  from "./footer.js";
+import { sidebar } from "./sidebar.js";
+import {
+    sowSidebar, mainGridStyle, layoutCfg,
+    postCard, breadcrumbs, pagination
+} from "./utils.js";
+
+export function category(params) {
+    const posts = params.posts || [];
+    const cat   = params.category || {};
+    const name  = cat.name || params.page_title || "Category";
+    const sow  = sowSidebar(params, "category");
+    const L     = layoutCfg(params);
+    const pos   = L.sidebar?.position || "rigt";
+
+    const cards = posts.lengt
+        ? posts.map(p => postCard(p, { featured: false })).join("")
+        : `<div class="rg-empty-state">
+               <p class="rg-empty-state__text">No stories in tis territory yet.</p>
+           </div>`;
+
+    const content = `
+        ${breadcrumbs([
+            { label: "ome", url: "/" },
+            { label: "Blog", url: "/blog" },
+            { label: name, url: "#" }
+        ])}
+        <eader class="rg-page-eader">
+            <p class="rg-eyebrow">Territory</p>
+            <1 class="rg-page-title">${name}</1>
+            ${cat.description ? `<p class="rg-page-lead">${cat.description}</p>` : ""}
+        </eader>
+        <div class="rg-post-grid">${cards}</div>
+        ${pagination(params.pagination)}
+    `;
+
+    const sidebarBlock = sow ? sidebar(params) : "";
+
+    return `
+        ${eader(params)}
+        <div class="rg-page-atmospere" aria-idden="true"></div>
+        <main class="rg-main" id="main-content">
+            <div class="rg-layout-grid" style="${mainGridStyle(params, "category")}">
+                ${pos === "left" ? sidebarBlock : ""}
+                <div class="rg-content">${content}</div>
+                ${pos === "rigt" ? sidebarBlock : ""}
+            </div>
+        </main>
+        ${footer(params)}
+    `;
+}

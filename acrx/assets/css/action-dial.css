@@ -1,0 +1,499 @@
+/* ==========================================================================
+   ActionDial — Acroxa Design System
+   ==========================================================================
+   Prefix: .ad- (default). To use a custom prefix, replace all ".ad-" with
+   your prefix (e.g. ".dash-") in a copy of this file.
+
+   Design Token Contract (zero hardcoded colors):
+   ----------------------------------------------
+   Surfaces (defined in root.css :root):
+     --color-primary-100   (base page surface, reserved)
+     --color-primary-200   (instrument resting background)
+     --color-primary-300   (ring track stroke)
+     --color-primary-400   (ticks - removed for actions)
+     --color-primary-500   (muted text, panel title)
+     --color-primary-600   (eyebrow, secondary text)
+     --color-primary-900   (primary text, values, titles)
+     --color-primary-1000  (black, for shadows)
+     --color-primary-100-aXX  (alpha variants: a10..a90)
+     --color-primary-200-aXX
+     --color-primary-1000-aXX (a10, a20, a30, a40, a50, a60, a70, a80, a90)
+
+   Accents (defined in root.css :root):
+     --accent-500          (primary interactive color — progress, thumb border, status, CTA)
+     --accent-500-a10      (CTA background default, 10%)
+     --accent-500-a20      (CTA background hover, 20%)
+     --accent-500-a40      (focus outline, 40%)
+
+   Local Component Tokens (defined below in :root section):
+     --id-shadow-rest      (instrument at rest)
+     --id-shadow-hover     (instrument hover)
+     --id-shadow-panel     (expanded panel)
+     --id-panel-radius     (expanded panel corner radius)
+     --ease-spring         (cubic-bezier(0.25, 0.46, 0.45, 0.94) — system easing)
+
+   Typography:
+     --font-body           (Outfit — UI text)
+
+   These tokens MUST be defined in :root or a theme layer before this
+   stylesheet loads. Missing tokens will visibly break the component.
+   ========================================================================== */
+
+/* Local component tokens (derive from root design tokens) */
+:root {
+  --id-shadow-rest:  0 1px 2px rgba(0,0,0,0.03), 0 10px 26px -12px rgba(0,0,0,0.14);
+  --id-shadow-hover: 0 2px 4px rgba(0,0,0,0.04), 0 16px 34px -12px rgba(0,0,0,0.18);
+  --id-shadow-panel: 0 4px 10px rgba(0,0,0,0.05), 0 28px 56px -18px rgba(0,0,0,0.22);
+  --id-panel-radius: 32px;
+  --morph-duration: 480ms;
+  --compress-duration: 120ms;
+  --reveal-duration: 1100ms;
+  --stagger-out: 200ms;
+}
+
+/* ==========================================================================
+   WRAPPER & PAGE HEAD
+   ========================================================================== */
+.ad-wrap {
+  width: 100%;
+}
+
+.ad-page-head {
+  max-width: 940px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+.ad-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary-600);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.ad-heading {
+  font-size: clamp(28px, 3.6vw, 38px);
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+  color: var(--color-primary-900);
+  font-weight: 600;
+}
+.ad-page-desc {
+  color: var(--color-primary-500);
+  font-size: 14.5px;
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* ==========================================================================
+   GRID
+   ========================================================================== */
+.ad-grid {
+  max-width: 920px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 30px;
+}
+
+.ad-slot { position: relative; }
+.ad-placeholder { visibility: hidden; }
+
+/* Dim non-source cards while one is expanded */
+.ad-grid.ad-has-expanded .ad-slot:not(.ad-is-source) .ad-instrument {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity .35s var(--ease-spring);
+}
+
+/* ==========================================================================
+   INSTRUMENT — resting circle gauge
+   ========================================================================== */
+.ad-instrument {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--color-primary-200);
+  box-shadow: var(--id-shadow-rest);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.4s var(--ease-spring), transform 0.4s var(--ease-spring);
+  overflow: hidden; /* clips the .ad-inner when idle animation scales it */
+}
+
+/* Inner wrapper — receives the idle animation (scale) so the outer
+   .ad-instrument can clip it via overflow:hidden. */
+.ad-inner {
+  position: absolute;
+  inset: 0;
+  /* transform-origin is center by default, which is correct for scale */
+  transition: transform 0.4s var(--ease-spring);
+}
+
+/* Hover lift — only when not expanded */
+.ad-instrument:not(.ad-expanded-state):hover {
+  box-shadow: var(--id-shadow-hover);
+  transform: translateY(-4px);
+}
+.ad-instrument:not(.ad-expanded-state):active {
+  transform: translateY(-1px) scale(0.98);
+}
+.ad-instrument:focus-visible {
+  outline: 2px solid var(--accent-500-a40);
+  outline-offset: 6px;
+}
+
+/* ==========================================================================
+   RING — static border (no progress animation for actions)
+   ========================================================================== */
+/* The ring SVG is rotated -90deg so 0% sits at 12 o'clock;
+   progress sweeps clockwise from there. */
+.ad-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.ad-ring circle { fill: none; }
+.ad-ring .ad-track {
+  stroke: var(--color-primary-300);
+  stroke-width: 3;
+}
+
+/* No progress ring for action cards */
+/* .ad-ring .ad-progress { ... } */
+
+/* Ticks removed for action cards */
+
+/* ==========================================================================
+   WELL — subtle inner shadow layer for depth
+   ========================================================================== */
+.ad-well {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  /* Radial gradient creates a soft inner glow concentrated at top-left */
+  background: radial-gradient(circle at 40% 40%, transparent 60%, var(--color-primary-1000-a10) 100%);
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ==========================================================================
+   THUMB — the signature interactive handle
+   ========================================================================== */
+.ad-thumb {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: var(--color-primary-200);
+  border: 2.5px solid var(--accent-500);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px var(--color-primary-1000-a20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: transform 0.3s var(--ease-spring);
+  cursor: pointer;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.ad-thumb::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--accent-500);
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   THUMB — REMOVED for action cards (no thumb needed)
+   ========================================================================== */
+/* .ad-thumb { ... } */
+/* .ad-thumb::after { ... } */
+/* .ad-unzipping { ... } */
+/* .ad-thumb:hover { ... } */
+/* .ad-thumb:focus-visible { ... } */
+
+/* ==========================================================================
+   CONTENT LAYERS — compact (collapsed) vs expanded panel
+   ========================================================================== */
+/* Compact — centered icon + title */
+.ad-content.ad-compact {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 5;
+}
+.ad-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ad-title {
+  font-size: 13px;
+  color: var(--color-primary-600);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+/* Expanded panel — full detail view */
+.ad-content.ad-expanded {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  padding: 36px 38px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  z-index: 6;
+}
+.ad-instrument.ad-expanded-state .ad-content.ad-expanded {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0.22s;
+}
+.ad-instrument.ad-expanded-state .ad-content.ad-compact {
+  opacity: 0;
+  pointer-events: none;
+}
+.ad-instrument.ad-expanded-state .ad-ring {
+  opacity: 0;
+}
+
+/* Panel header: title */
+.ad-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.ad-panel-title .ad-p-title {
+  font-size: 12.5px;
+  color: var(--color-primary-500);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Description */
+.ad-p-description {
+  font-size: 13px;
+  color: var(--color-primary-600);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Recommendations */
+.ad-panel-recs .ad-p-rec-label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primary-500);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.ad-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 20px;
+}
+.ad-suggestions li {
+  font-size: 12.5px;
+  color: var(--color-primary-900);
+  position: relative;
+  padding-left: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ad-suggestions li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 7px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent-500);
+}
+
+/* Panel footer: CTA button */
+.ad-panel-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+.ad-action-btn {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--accent-500);
+  background: var(--accent-500-a10);
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background .18s var(--ease-spring), transform .15s var(--ease-spring);
+}
+.ad-action-btn:hover {
+  background: var(--accent-500-a20);
+}
+.ad-action-btn:active {
+  transform: scale(0.97);
+}
+.ad-action-btn:focus-visible {
+  outline: 2px solid var(--accent-500-a40);
+  outline-offset: 3px;
+}
+.ad-action-arrow {
+  display: inline-flex;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+/* Close button — appears only in expanded state */
+.ad-close-btn {
+  position: absolute;
+  top: 22px; right: 22px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-primary-500);
+  font-size: 15px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  transition: opacity .3s var(--ease-spring) .18s, color .15s var(--ease-spring), background .15s var(--ease-spring);
+}
+.ad-instrument.ad-expanded-state .ad-close-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ad-close-btn:hover { color: var(--color-primary-900); background: var(--color-primary-200); }
+.ad-close-btn:focus-visible {
+  outline: 2px solid var(--accent-500-a40);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   IDLE ANIMATION — subtle breathing pulse + ring glow while collapsed
+   ========================================================================== */
+.ad-instrument:not(.ad-expanded-state).ad-idle-on .ad-inner {
+  animation: ad-breath 6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+@keyframes ad-breath {
+  50% { transform: scale(1.015); }
+}
+
+/* ==========================================================================
+   COMPRESSION DIP — brief "building tension" before morph
+   ========================================================================== */
+.ad-compressing {
+  transition: transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   MORPH STATE — expanded panel geometry & shadow
+   ========================================================================== */
+.ad-expanded-state {
+  box-shadow: var(--id-shadow-panel) !important;
+  border-radius: var(--id-panel-radius) !important;
+  overflow: hidden;
+  anchor-name: --expanded;
+  .ad-thumb{
+    display: none;
+  }
+  .ad-well{
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* ==========================================================================
+   COLLAPSE CONTENT RETREAT — panel content retreats before shell shrinks
+   ========================================================================== */
+.ad-collapsing .ad-content.ad-expanded {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 900px) {
+  .ad-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+}
+@media (max-width: 560px) {
+  .ad-grid { grid-template-columns: 1fr; max-width: 300px; gap: 22px; }
+  .ad-content.ad-expanded { padding: 28px 24px 24px; gap: 18px; }
+}
+
+/* ==========================================================================
+   PREFERS REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .ad-instrument *,
+  .ad-thumb,
+  .ad-ring .ad-progress {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .ad-idle-on { animation: none; }
+}
+
+/* ==========================================================================
+   PRINT
+   ========================================================================== */
+@media print {
+  .ad-thumb,
+  .ad-close-btn,
+  .ad-action-btn,
+  .ad-ring .ad-progress { display: none !important; }
+  .ad-instrument { break-inside: avoid; box-shadow: none; border: 1px solid var(--color-primary-300); }
+}
+
+/* ==========================================================================
+   DESIGN TOKENS (for reference — actual definitions live in root theme)
+   ==========================================================================
+   :root {
+     --color-primary-100:  #f4f4f4;
+     --color-primary-200:  #eeeeee;
+     --color-primary-300:  #dddddd;
+     --color-primary-400:  #999999;
+     --color-primary-500:  #666666;
+     --color-primary-600:  #444444;
+     --color-primary-700:  #2b2b2b;
+     --color-primary-900:  #111111;
+     --color-primary-1000: #000000;
+     --color-primary-100-a10..a90: alpha variants
+     --color-primary-200-a10..a90: alpha variants
+     --color-primary-1000-a10..a90: alpha variants
+     --accent-500:         #29809c;
+     --accent-500-a10:     rgba(41,128,156,0.10);
+     --accent-500-a20:     rgba(41,128,156,0.20);
+     --accent-500-a40:     rgba(41,128,156,0.40);
+     --id-shadow-rest:  0 1px 2px rgba(0,0,0,0.03), 0 10px 26px -12px rgba(0,0,0,0.14);
+     --id-shadow-hover: 0 2px 4px rgba(0,0,0,0.04), 0 16px 34px -12px rgba(0,0,0,0.18);
+     --id-shadow-panel: 0 4px 10px rgba(0,0,0,0.05), 0 28px 56px -18px rgba(0,0,0,0.22);
+     --id-panel-radius: 32px;
+     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+     --font-body: 'Outfit', sans-serif;
+   }
+   ========================================================================== */

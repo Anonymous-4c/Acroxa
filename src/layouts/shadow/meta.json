@@ -1,0 +1,34 @@
+{
+  "name": "Shadow",
+  "version": "1.0.0",
+  "description": "",
+  "author": {
+    "name": "Acroxa"
+  },
+  "preview": "/preview/screenshot.png",
+  "templates": {
+    "404": "templates/404.js",
+    "homepage": "templates/homepage.js",
+    "blog": "templates/blog.js",
+    "post": "templates/post.js",
+    "page": "templates/page.js",
+    "landing": "templates/landing.js"
+  },
+  "widgetAreas": [
+    "sidebar",
+    "footer-col-1",
+    "footer-col-2"
+  ],
+  "menuAreas": [
+    "primary",
+    "footer"
+  ],
+  "color_scheme": {
+    "primary": "#00f0ff",
+    "secondary": "#7c3aed",
+    "accent": "#ec4899",
+    "background": "#0a0a14"
+  },
+  "features": [],
+  "config": {}
+}

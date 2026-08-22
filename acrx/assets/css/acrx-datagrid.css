@@ -1,0 +1,255 @@
+/* ============================================================
+   acrx-datagrid.css — Acroxa DataGrid component styles
+   ============================================================ */
+
+.acrx-datagrid {
+  width: 100%;
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  background: var(--color-primary-200);
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+
+.dg-header {
+  display: flex;
+  align-items: center;
+  background: var(--accent-100);
+  border-bottom: 1px solid var(--color-primary-300);
+  min-height: 40px;
+  padding: 0 .75rem;
+}
+
+.dg-header .dg-cell {
+  font-size: .68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  padding: 0 .5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dg-header .dg-cell-selection {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+
+.dg-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.dg-row {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: .45rem .75rem;
+  border-bottom: 1px solid var(--color-primary-300);
+  transition: background .1s;
+  position: relative;
+  cursor: pointer;
+}
+
+.dg-row:last-child { border-bottom: none; }
+.dg-row:hover { background: var(--hover, rgba(255,255,255,.04)); }
+
+.dg-row.dg-selected {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.dg-row.dg-selected:hover {
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+}
+
+/* ── Cells ─────────────────────────────────────────────────────────────────── */
+
+.dg-cell {
+  padding: 0 .5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dg-cell-selection {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dg-cell-selection input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.dg-align-left   { text-align: left; }
+.dg-align-center { text-align: center; }
+.dg-align-right  { text-align: right; margin-left: auto; }
+
+/* ── Sort ──────────────────────────────────────────────────────────────────── */
+
+.dg-sort-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: 0;
+}
+
+.dg-sort-icon {
+  font-size: .6rem;
+  opacity: .3;
+  transition: opacity .15s, transform .15s;
+}
+
+.dg-sorted .dg-sort-icon {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.dg-sorted-desc .dg-sort-icon {
+  transform: rotate(180deg);
+}
+
+/* ── Select All ────────────────────────────────────────────────────────────── */
+
+.dg-select-all {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ── Expansion ─────────────────────────────────────────────────────────────── */
+
+.dg-expansion-row {
+  background: var(--color-primary-200);
+  cursor: default;
+}
+
+.dg-cell-expansion {
+  padding: 1rem 1.5rem;
+  width: 100%;
+}
+
+/* ── Loading / Skeleton ────────────────────────────────────────────────────── */
+
+.dg-loading { padding: .5rem; }
+
+.dg-skeleton-row {
+  display: flex;
+  gap: .5rem;
+  padding: .5rem;
+  border-bottom: 1px solid var(--color-primary-300);
+}
+
+.dg-skeleton-cell {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-primary-300) 25%, var(--color-primary-200) 50%, var(--color-primary-300) 75%);
+  background-size: 200% 100%;
+  animation: dg-shimmer 1.5s infinite;
+  flex: 1;
+}
+
+@keyframes dg-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Empty / Error ─────────────────────────────────────────────────────────── */
+
+.dg-empty,
+.dg-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  gap: .5rem;
+}
+
+.dg-empty-icon,
+.dg-error-icon {
+  font-size: 2rem;
+  opacity: .3;
+}
+
+.dg-empty-message,
+.dg-error-message {
+  font-size: .875rem;
+  color: var(--text-muted);
+}
+
+.dg-error { color: var(--color-danger); }
+
+/* ── Pagination ────────────────────────────────────────────────────────────── */
+
+.dg-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--color-primary-300);
+}
+
+.dg-page-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-sm, 5px);
+  background: var(--color-primary-200);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: .75rem;
+  transition: border-color .12s, background .12s;
+}
+
+.dg-page-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.dg-page-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.dg-page-info {
+  font-size: .78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ── Sticky Header ─────────────────────────────────────────────────────────── */
+
+.acrx-datagrid.sticky-header .dg-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dg-row { padding: .35rem .5rem; min-height: 44px; }
+  .dg-cell { padding: 0 .3rem; font-size: .8rem; }
+}

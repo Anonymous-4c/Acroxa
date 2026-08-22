@@ -1,0 +1,420 @@
+{
+  "meta": {
+    "version": "1.0",
+    "timestamp": "2026-07-06T05:55:05.633Z",
+    "cms": "Acroxa",
+    "providers": [
+      "users",
+      "posts",
+      "pages",
+      "categories",
+      "media"
+    ],
+    "includeMedia": false,
+    "recordCounts": {
+      "users": 0,
+      "posts": 3,
+      "pages": 1,
+      "categories": 4
+    }
+  },
+  "settings": {
+    "general": {
+      "siteName": "Acroxa CMS",
+      "siteTagline": "",
+      "siteDescription": "",
+      "siteLogo": "",
+      "siteFavicon": "",
+      "siteURL": "https://example.com",
+      "adminEmail": ""
+    },
+    "localization": {
+      "language": "en",
+      "timezone": "UTC",
+      "dateFormat": "DD/MM/YYYY",
+      "timeFormat": "24h",
+      "currency": "USD"
+    },
+    "system": {
+      "maintenanceMode": false,
+      "registrationEnabled": true,
+      "defaultUserRole": "user",
+      "contentModerationRequired": false,
+      "autoSaveInterval": 30,
+      "paginationLimit": 10
+    },
+    "security": {
+      "passwordPolicy": {
+        "minLength": 8,
+        "requireNumbers": true,
+        "requireSymbols": false,
+        "requireUppercase": true
+      },
+      "loginAttemptsLimit": 5,
+      "sessionTimeout": 3600,
+      "twoFactorEnabled": false,
+      "allowedIPs": [],
+      "corsOrigins": [
+        "*"
+      ]
+    },
+    "api": {
+      "thirdPartyKeys": {
+        "googleAnalytics": "",
+        "stripe": "",
+        "openai": "",
+        "gemini": ""
+      },
+      "apiEnabled": true,
+      "apiRateLimit": 100,
+      "webhookURLs": []
+    },
+    "plugins": {
+      "enabledPlugins": [],
+      "pluginAutoUpdate": true
+    },
+    "content": {
+      "imageOptimization": {
+        "enabled": true,
+        "quality": 80,
+        "formats": [
+          "webp"
+        ]
+      },
+      "versioning": {
+        "enabled": true,
+        "maxRevisions": 10
+      },
+      "autosave": {
+        "enabled": true,
+        "interval": 30
+      },
+      "defaultPostStatus": "draft",
+      "allowComments": true,
+      "postsPerPage": 10,
+      "uploadStrategy": "auto",
+      "storageDriver": "local",
+      "autoOrganizeMedia": true,
+      "mediaNaming": "uuid"
+    },
+    "homepage": {
+      "mode": "posts",
+      "pageId": null,
+      "template": "homepage"
+    },
+    "blogPage": {
+      "enabled": false,
+      "pageId": null,
+      "template": "blog",
+      "postsPerPage": 10
+    },
+    "routing": {
+      "postPrefix": "post",
+      "categoryPrefix": "category",
+      "pagePrefix": "",
+      "enablePrettyURLs": true,
+      "permalinkStructure": "/:postPrefix/:slug",
+      "landingPagePrefix": "landing"
+    },
+    "seo": {
+      "openGraph": {
+        "enabled": true,
+        "defaultImage": ""
+      },
+      "twitterCards": {
+        "enabled": true,
+        "siteHandle": ""
+      },
+      "schemaMarkup": {
+        "enabled": true,
+        "type": "Organization"
+      },
+      "metaTitle": "",
+      "metaDescription": "",
+      "metaKeywords": "",
+      "enableSitemap": true,
+      "enableRobotsTxt": true,
+      "canonicalURL": true
+    },
+    "analytics": {
+      "analyticsEnabled": true,
+      "trackingID": "",
+      "cookieConsentRequired": true
+    },
+    "ai": {
+      "providers": {
+        "openai": {
+          "apiKey": "",
+          "model": "gpt-4o-mini",
+          "enabled": true
+        },
+        "gemini": {
+          "apiKey": "",
+          "model": "gemini-1.5-pro",
+          "enabled": false
+        },
+        "custom": {
+          "endpoint": "",
+          "apiKey": ""
+        }
+      },
+      "features": {
+        "contentSuggestions": true,
+        "seoSuggestions": true,
+        "autoTitleGeneration": true,
+        "autoDescriptionGeneration": true,
+        "chatAssistant": true
+      },
+      "enabled": true,
+      "defaultProvider": "openai"
+    },
+    "advanced": {
+      "debugMode": false,
+      "logLevel": "info",
+      "cacheEnabled": true,
+      "cacheTTL": 3600,
+      "cdnURL": "",
+      "environment": "production"
+    },
+    "backupPolicy": {
+      "schedule": {
+        "interval": "daily",
+        "time": "02:00",
+        "customInterval": 0
+      },
+      "targets": {
+        "local": true,
+        "git": false,
+        "cloud": false
+      },
+      "git": {
+        "repoURL": "",
+        "branch": "main",
+        "token": "",
+        "authorName": "Acroxa CMS",
+        "authorEmail": "cms@acroxa.io"
+      },
+      "cloud": {
+        "provider": "",
+        "bucket": "",
+        "region": "",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "endpoint": ""
+      },
+      "enabled": false,
+      "includeMedia": false
+    },
+    "createdAt": "2026-07-02T17:15:16.110Z",
+    "updatedAt": "2026-07-02T17:15:16.110Z",
+    "id": "6a469ca47a081f9bab1331d5"
+  },
+  "data": {
+    "users": [],
+    "posts": [
+      {
+        "_id": "693903932bfd7958cf6a7eda",
+        "title": "Welcome to alpha - Acroxa CMS Alpha",
+        "slug": "welcome-to-acroxa-cms-alpha",
+        "content": "<h1>🎉 Welcome to Acroxa CMS Alpha!</h1>\n        <p>Congratulations on setting up your new Acroxa CMS installation!</p>\n        <p>This is your first post. You can edit or delete it from the admin dashboard.</p>",
+        "excerpt": "Welcome to your new alpha powered by Acroxa CMS Alpha.",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [
+          "693903922bfd7958cf6a7ed4"
+        ],
+        "status": "published",
+        "publishDate": "2025-12-10T05:22:27.366Z",
+        "metaTitle": "Welcome to alpha - Acroxa CMS",
+        "metaDescription": "Get started with Acroxa CMS",
+        "focusKeyword": "acroxa cms",
+        "keywords": [
+          "acroxa",
+          "cms",
+          "welcome"
+        ],
+        "isPillarContent": true,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2025-12-10T05:22:27.369Z",
+        "updatedAt": "2025-12-10T05:22:28.406Z",
+        "__v": 1
+      },
+      {
+        "_id": "693d1eb358e6f4f1205ad1d7",
+        "title": "Untitled",
+        "slug": "untitled",
+        "content": "<div contenteditable=\"true\" class=\"editor-widget\" data-widget-type=\"Facebook\" tabindex=\"0\" role=\"article\" aria-label=\"Facebook widget\">Facebook Widget</div>",
+        "excerpt": "",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [],
+        "tags": [],
+        "status": "draft",
+        "publishDate": "2025-12-13T08:07:15.411Z",
+        "publishAt": null,
+        "featuredImage": "",
+        "featuredImageAlt": "",
+        "metaTitle": "Untitled",
+        "metaDescription": "",
+        "focusKeyword": "",
+        "keywords": [],
+        "canonicalUrl": "",
+        "ogTitle": "Untitled",
+        "ogDescription": "",
+        "ogImage": "",
+        "isPillarContent": false,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2025-12-13T08:07:15.432Z",
+        "updatedAt": "2025-12-13T08:07:15.432Z",
+        "__v": 0
+      },
+      {
+        "_id": "69c4fd1abd7eb2628ba3f7a2",
+        "title": "Welcome to Our Announcements Se",
+        "slug": "welcome-to-our-announcements-se",
+        "content": "\n        <p>This is a dummy announcement post created automatically for testing purposes in Acroxa CMS.</p>\n        <p>It demonstrates the full createPost functionality with Mongoose models.</p>\n       \n        <h2>Key Features Tested</h2>\n        <ul>\n          <li>Author as real ObjectId (from logged-in user)</li>\n          <li>Categories as real ObjectId array</li>\n          <li>SEO fields and Open Graph tags</li>\n          <li>Reading time calculation (via pre-save hook)</li>\n          <li>Published status with current date</li>\n        </ul>\n      ",
+        "excerpt": "This is a test announcement post created automatically via JavaScript for Acroxa CMS.",
+        "author": "693903902bfd7958cf6a7ed2",
+        "categories": [
+          "693903922bfd7958cf6a7ed4"
+        ],
+        "tags": [],
+        "status": "published",
+        "publishDate": "2026-03-26T09:32:10.313Z",
+        "publishAt": null,
+        "featuredImage": "https://picsum.photos/id/1015/1200/630",
+        "featuredImageAlt": "Official Announcement",
+        "metaTitle": "Latest Announcements | Acroxa CMS",
+        "metaDescription": "Stay updated with the latest official announcements and updates from Acroxa CMS.",
+        "focusKeyword": "announcements",
+        "keywords": [
+          "announcements",
+          "news",
+          "updates",
+          "acroxa",
+          "official"
+        ],
+        "canonicalUrl": "",
+        "ogTitle": "New Announcement Posted - Acroxa CMS",
+        "ogDescription": "Check out our latest official announcement from the Acroxa team.",
+        "ogImage": "https://picsum.photos/id/1015/1200/630",
+        "seoReport": {
+          "score": 88,
+          "scoreParts": {
+            "readability": 92,
+            "seo": 85,
+            "performance": 87
+          },
+          "suggestions": [
+            "Consider adding internal links",
+            "Add more images with alt text"
+          ],
+          "wordCount": 285
+        },
+        "isPillarContent": false,
+        "allowComments": true,
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "likes": 0,
+        "readingTime": 1,
+        "createdAt": "2026-03-26T09:32:10.355Z",
+        "updatedAt": "2026-03-26T10:41:24.277Z",
+        "__v": 0
+      }
+    ],
+    "pages": [
+      {
+        "_id": "693903952bfd7958cf6a7edd",
+        "title": "Home",
+        "slug": "home",
+        "content": "<div style=\"text-align: center; padding: 2rem;\">\n          <h1>Welcome to alpha</h1>\n          <p>Powered by Acroxa CMS Alpha</p>\n        </div>",
+        "status": "published",
+        "template": "home",
+        "parent": null,
+        "order": 1,
+        "showInMenu": true,
+        "author": "693903902bfd7958cf6a7ed2",
+        "metaTitle": "alpha - Home",
+        "metaDescription": "Welcome to alpha, powered by Acroxa CMS.",
+        "keywords": [],
+        "noIndex": false,
+        "noFollow": false,
+        "views": 0,
+        "createdAt": "2025-12-10T05:22:29.264Z",
+        "updatedAt": "2026-06-14T09:50:31.009Z",
+        "__v": 0
+      }
+    ],
+    "categories": [
+      {
+        "_id": "693903922bfd7958cf6a7ed4",
+        "name": "Announcements",
+        "slug": "announcements",
+        "description": "Official announcements and updates from Acroxa CMS",
+        "color": "#4F46E5",
+        "parent": null,
+        "deletable": false,
+        "keywords": [],
+        "order": 1,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.055Z",
+        "updatedAt": "2025-12-10T05:22:26.055Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed5",
+        "name": "Tutorials",
+        "slug": "tutorials",
+        "description": "Learn how to make the most of Acroxa CMS",
+        "color": "#10B981",
+        "parent": null,
+        "deletable": true,
+        "keywords": [],
+        "order": 2,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed6",
+        "name": "General",
+        "slug": "general",
+        "description": "General posts and articles",
+        "color": "#6B7280",
+        "parent": null,
+        "deletable": true,
+        "keywords": [],
+        "order": 3,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      },
+      {
+        "_id": "693903922bfd7958cf6a7ed7",
+        "name": "Uncategorized",
+        "slug": "uncategorized",
+        "description": "Default category for uncategorized content",
+        "color": "#9CA3AF",
+        "parent": null,
+        "deletable": false,
+        "keywords": [],
+        "order": 4,
+        "isActive": true,
+        "__v": 0,
+        "createdAt": "2025-12-10T05:22:26.056Z",
+        "updatedAt": "2025-12-10T05:22:26.056Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,331 @@
+/* ==============================================
+   FILTERS-EFFECTS.CSS - Visual Effects
+   ============================================== */
+
+/* ============= FILTER UTILITIES ============= */
+
+/* Blur */
+.blur-none { filter: blur(0); }
+.blur-xs { filter: blur(2px); }
+.blur-sm { filter: blur(4px); }
+.blur { filter: blur(8px); }
+.blur-md { filter: blur(12px); }
+.blur-lg { filter: blur(16px); }
+.blur-xl { filter: blur(24px); }
+
+/* Brightness */
+.brightness-0 { filter: brightness(0); }
+.brightness-50 { filter: brightness(0.5); }
+.brightness-75 { filter: brightness(0.75); }
+.brightness-100 { filter: brightness(1); }
+.brightness-125 { filter: brightness(1.25); }
+.brightness-150 { filter: brightness(1.5); }
+.brightness-200 { filter: brightness(2); }
+
+.bright { filter: brightness(1.2); }
+.dim { filter: brightness(0.7); }
+
+/* Contrast */
+.contrast-0 { filter: contrast(0); }
+.contrast-50 { filter: contrast(0.5); }
+.contrast-75 { filter: contrast(0.75); }
+.contrast-100 { filter: contrast(1); }
+.contrast-125 { filter: contrast(1.25); }
+.contrast-150 { filter: contrast(1.5); }
+.contrast-200 { filter: contrast(2); }
+
+/* Grayscale */
+.grayscale-0 { filter: grayscale(0); }
+.grayscale-25 { filter: grayscale(0.25); }
+.grayscale-50 { filter: grayscale(0.5); }
+.grayscale-75 { filter: grayscale(0.75); }
+.grayscale { filter: grayscale(1); }
+
+/* Saturate */
+.saturate-0 { filter: saturate(0); }
+.saturate-50 { filter: saturate(0.5); }
+.saturate-100 { filter: saturate(1); }
+.saturate-150 { filter: saturate(1.5); }
+.saturate-200 { filter: saturate(2); }
+
+/* Sepia */
+.sepia-0 { filter: sepia(0); }
+.sepia-25 { filter: sepia(0.25); }
+.sepia-50 { filter: sepia(0.5); }
+.sepia-75 { filter: sepia(0.75); }
+.sepia { filter: sepia(1); }
+
+/* Hue Rotate */
+.hue-rotate-0 { filter: hue-rotate(0deg); }
+.hue-rotate-15 { filter: hue-rotate(15deg); }
+.hue-rotate-30 { filter: hue-rotate(30deg); }
+.hue-rotate-60 { filter: hue-rotate(60deg); }
+.hue-rotate-90 { filter: hue-rotate(90deg); }
+.hue-rotate-180 { filter: hue-rotate(180deg); }
+
+/* Invert */
+.invert-0 { filter: invert(0); }
+.invert-25 { filter: invert(0.25); }
+.invert-50 { filter: invert(0.5); }
+.invert-75 { filter: invert(0.75); }
+.invert { filter: invert(1); }
+
+/* ============= BACKDROP FILTERS ============= */
+
+/* Backdrop Blur */
+.backdrop-blur-none { backdrop-filter: blur(0); }
+.backdrop-blur-xs { backdrop-filter: blur(2px); }
+.backdrop-blur-sm { backdrop-filter: blur(4px); }
+.backdrop-blur { backdrop-filter: blur(8px); }
+.backdrop-blur-md { backdrop-filter: blur(12px); }
+.backdrop-blur-lg { backdrop-filter: blur(16px); }
+.backdrop-blur-xl { backdrop-filter: blur(24px); }
+
+/* Backdrop Brightness */
+.backdrop-brightness-50 { backdrop-filter: brightness(0.5); }
+.backdrop-brightness-75 { backdrop-filter: brightness(0.75); }
+.backdrop-brightness-100 { backdrop-filter: brightness(1); }
+.backdrop-brightness-125 { backdrop-filter: brightness(1.25); }
+.backdrop-brightness-150 { backdrop-filter: brightness(1.5); }
+
+/* Backdrop Grayscale */
+.backdrop-grayscale-0 { backdrop-filter: grayscale(0); }
+.backdrop-grayscale-50 { backdrop-filter: grayscale(0.5); }
+.backdrop-grayscale { backdrop-filter: grayscale(1); }
+
+/* Backdrop Saturate */
+.backdrop-saturate-0 { backdrop-filter: saturate(0); }
+.backdrop-saturate-50 { backdrop-filter: saturate(0.5); }
+.backdrop-saturate-100 { backdrop-filter: saturate(1); }
+.backdrop-saturate-150 { backdrop-filter: saturate(1.5); }
+.backdrop-saturate-200 { backdrop-filter: saturate(2); }
+
+/* ============= GLASSMORPHISM EFFECTS ============= */
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.frost {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ============= HOVER EFFECTS ============= */
+
+/* Lift Effect */
+.hover-lift {
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Glow Effect */
+.hover-glow {
+  transition: box-shadow var(--duration-base) var(--ease-out);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.5),
+              0 0 40px rgba(14, 165, 233, 0.3);
+}
+
+/* Scale Effect */
+.hover-scale {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.02);
+}
+
+.hover-scale-lg:hover {
+  transform: scale(1.1);
+}
+
+/* Shrink Effect */
+.hover-shrink {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-shrink:hover {
+  transform: scale(0.95);
+}
+
+/* Dim Effect */
+.hover-dim {
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.hover-dim:hover {
+  opacity: 0.7;
+}
+
+/* Brighten Effect */
+.hover-brighten {
+  transition: filter var(--duration-base) var(--ease-out);
+}
+
+.hover-brighten:hover {
+  filter: brightness(1.2);
+}
+
+/* Darken Effect */
+.hover-darken {
+  transition: filter var(--duration-base) var(--ease-out);
+}
+
+.hover-darken:hover {
+  filter: brightness(0.8);
+}
+
+/* Raise Effect (Shadow) */
+.hover-raise {
+  transition: box-shadow var(--duration-base) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+
+.hover-raise:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Rotate Effect */
+.hover-rotate {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+}
+
+.hover-rotate-full {
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.hover-rotate-full:hover {
+  transform: rotate(360deg);
+}
+
+/* Tilt Effect */
+.hover-tilt {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-tilt:hover {
+  transform: perspective(1000px) rotateX(10deg);
+}
+
+/* Float Effect */
+.hover-float {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-float:hover {
+  transform: translateY(-8px);
+}
+
+/* Slide Effect */
+.hover-slide-right {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-slide-right:hover {
+  transform: translateX(4px);
+}
+
+.hover-slide-left {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.hover-slide-left:hover {
+  transform: translateX(-4px);
+}
+
+/* ============= COMBINED EFFECTS ============= */
+
+.hover-lift-glow {
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+  box-shadow: var(--shadow-md);
+}
+
+.hover-lift-glow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.3),
+              var(--shadow-lg);
+}
+
+.hover-scale-glow {
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.hover-scale-glow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
+}
+
+/* ============= IMAGE OVERLAY EFFECTS ============= */
+
+.img-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.img-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background var(--duration-base) var(--ease-out);
+}
+
+.img-overlay:hover::after {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ============= GRADIENT OVERLAY ============= */
+
+.gradient-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  pointer-events: none;
+}
+
+/* ============= MIX BLEND MODES ============= */
+
+.blend-normal { mix-blend-mode: normal; }
+.blend-multiply { mix-blend-mode: multiply; }
+.blend-screen { mix-blend-mode: screen; }
+.blend-overlay { mix-blend-mode: overlay; }
+.blend-darken { mix-blend-mode: darken; }
+.blend-lighten { mix-blend-mode: lighten; }
+.blend-difference { mix-blend-mode: difference; }

@@ -1,0 +1,630 @@
+/* ========================================
+   ACRX UI EFFECTS & ADDITIONAL STYLES
+   All visual effects, textures, animations
+======================================== */
+
+/* ========= TEXTURE OVERLAYS ========= */
+
+/* Linen Texture */
+.acrx-texture-linen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+/* Carbon Fiber Texture */
+.acrx-texture-carbon::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      var(--color-primary-900-a10) 0px,
+      transparent 1px,
+      transparent 2px,
+      var(--color-primary-900-a10) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--color-primary-900-a10) 0px,
+      transparent 1px,
+      transparent 2px,
+      var(--color-primary-900-a10) 3px
+    );
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.3;
+}
+
+/* Brushed Metal Texture */
+.acrx-texture-brushed::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-primary-900-a10) 45%,
+    var(--color-primary-900-a20) 50%,
+    var(--color-primary-900-a10) 55%,
+    transparent 100%
+  );
+  background-size: 4px 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.3;
+}
+
+/* ========= BACKGROUND TYPES ========= */
+
+/* Solid Background */
+.acrx-bg-solid {
+  background: var(--color-primary-50) !important;
+}
+
+/* Gradient Background */
+.acrx-bg-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-50) 0%,
+    var(--color-primary-100) 100%
+  ) !important;
+}
+
+/* Pattern Background */
+.acrx-bg-pattern {
+  background-color: var(--color-primary-50);
+  background-image: 
+    radial-gradient(circle at 20px 20px, var(--color-primary-200-a40) 2px, transparent 2px),
+    radial-gradient(circle at 60px 60px, var(--color-primary-200-a40) 2px, transparent 2px);
+  background-size: 80px 80px;
+}
+
+/* ========= BACKGROUND ANIMATIONS ========= */
+
+/* Particles Background Animation */
+.acrx-bg-particles::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20% 30%, var(--color-primary-600), transparent),
+    radial-gradient(2px 2px at 60% 70%, var(--color-primary-600), transparent),
+    radial-gradient(1px 1px at 50% 50%, var(--color-primary-600), transparent),
+    radial-gradient(1px 1px at 80% 10%, var(--color-primary-600), transparent),
+    radial-gradient(1px 1px at 10% 80%, var(--color-primary-600), transparent);
+  background-size: 200% 200%;
+  animation: particlesFloat 20s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes particlesFloat {
+  0%, 100% { background-position: 0% 0%; }
+  25% { background-position: 50% 50%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 50% 50%; }
+}
+
+/* Grid Background Animation */
+.acrx-bg-grid::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--color-primary-300-a30) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-primary-300-a30) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 15s linear infinite;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes gridMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
+}
+
+/* Flowfield Background Animation */
+.acrx-bg-flowfield::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--color-primary-300-a20),
+    transparent 40%
+  );
+  animation: flowfieldPulse 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes flowfieldPulse {
+  0%, 100% {
+    background: radial-gradient(
+      circle at 30% 40%,
+      var(--color-primary-300-a20),
+      transparent 40%
+    );
+  }
+  33% {
+    background: radial-gradient(
+      circle at 70% 30%,
+      var(--color-primary-300-a20),
+      transparent 40%
+    );
+  }
+  66% {
+    background: radial-gradient(
+      circle at 50% 70%,
+      var(--color-primary-300-a20),
+      transparent 40%
+    );
+  }
+}
+
+/* Noise Background Animation */
+.acrx-bg-noise::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  animation: noiseShift 1s steps(10) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes noiseShift {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(10%, 5%); }
+  60% { transform: translate(5%, -15%); }
+  70% { transform: translate(-15%, 10%); }
+  80% { transform: translate(5%, 5%); }
+  90% { transform: translate(-10%, -10%); }
+}
+
+/* ========= LOADING STYLES ========= */
+
+/* Spinner Loading */
+.acrx-loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-primary-200);
+  border-top-color: var(--color-primary-600);
+  border-radius: 50%;
+  animation: spinnerRotate 1s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Progress Bar Loading */
+.acrx-loading-progress {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: var(--color-primary-200);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.acrx-loading-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+  border-radius: 10px;
+  animation: progressSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+/* Skeleton Loading */
+.acrx-loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-100) 25%,
+    var(--color-primary-200) 50%,
+    var(--color-primary-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Neon Loading */
+.acrx-loading-neon {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-primary-600);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 10px var(--color-primary-a30),
+    0 0 20px var(--color-primary-a20),
+    inset 0 0 10px var(--color-primary-a10);
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px var(--color-primary-a30),
+      0 0 20px var(--color-primary-a20),
+      inset 0 0 10px var(--color-primary-a10);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 
+      0 0 20px var(--color-primary-a50),
+      0 0 40px var(--color-primary-a30),
+      inset 0 0 20px var(--color-primary-a20);
+    opacity: 0.5;
+  }
+}
+
+/* ========= ACCENT GLOW VARIATIONS ========= */
+
+/* Light Glow */
+.acrx-accent-glow-light .radio-item.active,
+.acrx-accent-glow-light .btn-primary,
+.acrx-accent-glow-light .acrx-toggle.active {
+  box-shadow: 
+    0 0 15px var(--color-primary-a40),
+    0 4px 12px var(--color-primary-a30);
+}
+
+/* Heavy Glow */
+.acrx-accent-glow-heavy .radio-item.active,
+.acrx-accent-glow-heavy .btn-primary,
+.acrx-accent-glow-heavy .acrx-toggle.active {
+  box-shadow: 
+    0 0 25px var(--color-primary-a60),
+    0 0 50px var(--color-primary-a30),
+    0 8px 16px rgba(0, 0, 0, 0.2);
+  animation: heavyGlowPulse 2s ease-in-out infinite;
+}
+
+@keyframes heavyGlowPulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 25px var(--color-primary-a60),
+      0 0 50px var(--color-primary-a30),
+      0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 35px var(--color-primary-a70),
+      0 0 70px var(--color-primary-a40),
+      0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* ========= UI PULSE (BREATHING ANIMATION) ========= */
+
+.acrx-ui-pulse .setting-section,
+.acrx-ui-pulse .metric-card,
+.acrx-ui-pulse .widget.card {
+  animation: uiPulseBreathe 3s ease-in-out infinite;
+}
+
+@keyframes uiPulseBreathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    transform: scale(1.01);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* ========= NEON CURSOR ========= */
+
+.acrx-neon-cursor {
+  cursor: url("data:image/svg+xml,%3Csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%236366f1;stop-opacity:0.8'/%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='12' fill='url(%23grad)'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%238b5cf6'/%3E%3C/svg%3E") 16 16, auto;
+}
+
+.acrx-neon-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%236366f1;stop-opacity:0.8'/%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='12' fill='url(%23grad)'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%238b5cf6'/%3E%3C/svg%3E") 16 16, auto;
+}
+
+/* ========= MICROINTERACTIONS ========= */
+
+.acrx-micro-enabled .radio-item:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.acrx-micro-enabled .btn-primary:active,
+.acrx-micro-enabled .btn-secondary:active,
+.acrx-micro-enabled .button-pst:active {
+  transform: scale(0.97) translateY(1px);
+  transition: transform 0.1s ease;
+}
+
+.acrx-micro-enabled .acrx-toggle:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.acrx-micro-enabled .pp-dropdown-toggle:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Ripple effect on click */
+.acrx-micro-enabled .radio-item,
+.acrx-micro-enabled .btn,
+.acrx-micro-enabled .button-pst {
+  position: relative;
+  overflow: hidden;
+}
+
+.acrx-micro-enabled .radio-item::after,
+.acrx-micro-enabled .btn::after,
+.acrx-micro-enabled .button-pst::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.acrx-micro-enabled .radio-item:active::after,
+.acrx-micro-enabled .btn:active::after,
+.acrx-micro-enabled .button-pst:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ========= PAGE TRANSITIONS ========= */
+
+/* Fade Transition */
+.acrx-transition-fade .main,
+.acrx-transition-fade .setting-section {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide Transition */
+.acrx-transition-slide .main,
+.acrx-transition-slide .setting-section {
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Zoom Transition */
+.acrx-transition-zoom .main,
+.acrx-transition-zoom .setting-section {
+  animation: zoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Fold Transition */
+.acrx-transition-fold .main,
+.acrx-transition-fold .setting-section {
+  animation: foldIn 0.5s ease;
+  transform-style: preserve-3d;
+}
+
+@keyframes foldIn {
+  from {
+    transform: rotateY(-90deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0);
+    opacity: 1;
+  }
+}
+
+/* ========= SCROLLBAR STYLES ========= */
+
+/* Slim Scrollbar */
+.acrx-scrollbar-slim ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.acrx-scrollbar-slim ::-webkit-scrollbar-track {
+  background: var(--color-primary-100);
+  border-radius: 2px;
+}
+
+.acrx-scrollbar-slim ::-webkit-scrollbar-thumb {
+  background: var(--color-primary-400);
+  border-radius: 2px;
+}
+
+.acrx-scrollbar-slim ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-500);
+}
+
+/* Modern Scrollbar */
+.acrx-scrollbar-modern ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.acrx-scrollbar-modern ::-webkit-scrollbar-track {
+  background: var(--color-primary-100);
+  border-radius: 10px;
+}
+
+.acrx-scrollbar-modern ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-primary-400), var(--color-primary-500));
+  border-radius: 10px;
+  border: 2px solid var(--color-primary-100);
+}
+
+.acrx-scrollbar-modern ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--color-primary-500), var(--color-primary-600));
+}
+
+/* Hidden Scrollbar */
+.acrx-scrollbar-hidden ::-webkit-scrollbar {
+  display: none;
+}
+
+.acrx-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* ========= TOUCH MODE ========= */
+
+.acrx-touch-mode .btn-primary,
+.acrx-touch-mode .btn-secondary,
+.acrx-touch-mode .button-pst,
+.acrx-touch-mode .radio-item,
+.acrx-touch-mode .pp-dropdown-toggle {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+.acrx-touch-mode .acrx-toggle {
+  min-height: 32px;
+  min-width: 56px;
+}
+
+/* ========= KEYBOARD NAVIGATION HIGHLIGHTS ========= */
+
+.acrx-kbd-highlight .radio-item:focus,
+.acrx-kbd-highlight .btn:focus,
+.acrx-kbd-highlight .button-pst:focus,
+.acrx-kbd-highlight .pp-dropdown-toggle:focus,
+.acrx-kbd-highlight input:focus,
+.acrx-kbd-highlight select:focus {
+  outline: 3px solid var(--color-primary-600);
+  outline-offset: 3px;
+  border-radius: inherit;
+}
+
+/* ========= PERFORMANCE MODES ========= */
+
+/* Turbo Mode - Faster animations */
+.acrx-perf-turbo * {
+  transition-duration: 0.15s !important;
+  animation-duration: 0.3s !important;
+}
+
+/* Battery Saver Mode - Minimal effects */
+.acrx-perf-battery * {
+  transition: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+}
+
+.acrx-perf-battery .setting-section:hover,
+.acrx-perf-battery .metric-card:hover,
+.acrx-perf-battery .radio-item:hover,
+.acrx-perf-battery .btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ========= DEVELOPER MODE ========= */
+
+.acrx-dev-overlay * {
+  outline: 1px dashed rgba(255, 0, 0, 0.3) !important;
+  position: relative;
+}
+
+.acrx-dev-overlay *::before {
+  content: attr(class);
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  background: rgba(0, 0, 0, 0.9);
+  color: #0f0;
+  font-size: 9px;
+  font-family: monospace;
+  padding: 2px 4px;
+  z-index: 99999;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========= RESPONSIVE ADJUSTMENTS ========= */
+
+@media (max-width: 768px) {
+  .acrx-ui-fluid .setting-section,
+  .acrx-ui-glass .setting-section,
+  .acrx-ui-aurora .setting-section {
+    border-radius: 16px;
+  }
+  
+  .acrx-scale-80,
+  .acrx-scale-90,
+  .acrx-scale-110,
+  .acrx-scale-120,
+  .acrx-scale-130,
+  .acrx-scale-140 {
+    transform: scale(1) !important;
+  }
+}

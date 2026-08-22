@@ -1,0 +1,121 @@
+{
+  "name": "Zenith",
+  "version": "1.0.0",
+  "description": "A modern sleek light-theme layout with clean typography and minimalist design.",
+  "preview": "/preview/screenshot.png",
+  "author": {
+    "name": "Acroxa",
+    "url": "https://www.acroxa.com"
+  },
+  "stylesheets": [
+    "/layouts/framework/reset.css",
+    "/layouts/framework/variables.css",
+    "/layouts/framework/typography.css",
+    "/layouts/framework/components.css",
+    "/layouts/framework/utilities.css",
+    "/layouts/framework/layout-grid.css",
+    "/layouts/framework/layout-flex.css",
+    "/layouts/framework/animations.css",
+    "/layouts/framework/responsive.css",
+    "/layouts/framework/filter-effects.css"
+  ],
+  "customStyles": "body{background:#ffffff;color:#1f2937;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}html{scroll-behavior:smooth}::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:#f3f4f6}::-webkit-scrollbar-thumb{background:#bfdbfe;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:#93c5fd}.zen-header{border-bottom:1px solid #e5e7eb;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}.zen-nav-item{transition:all 0.3s ease}.zen-nav-item:hover{color:#0284c7;transform:translateY(-2px)}.zen-accent{color:#0284c7}.zen-container{max-width:1280px;margin:0 auto;padding:0 2rem}",
+  "customScripts": "document.addEventListener('DOMContentLoaded',function(){const links=document.querySelectorAll('a[href]');links.forEach(link=>{if(link.hostname!==location.hostname&&link.target!=='_blank'){link.target='_blank';link.rel='noopener noreferrer'}})});",
+  "_migration_note": "routes[] removed in v1.0.0 — routing is now owned by CMS core (RouteResolver). Templates declared below.",
+  "templates": {
+    "404": "404",
+    "homepage": "homepage",
+    "blog": "blog",
+    "post": "post",
+    "page": "page",
+    "category": "category",
+    "landing": "landing"
+  },
+  "widgetAreas": [
+    "sidebar",
+    "footer-col-1",
+    "footer-col-2",
+    "footer-col-3"
+  ],
+  "menuAreas": [
+    "primary",
+    "footer"
+  ],
+  "config": {
+    "layout": {
+      "sidebar": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "label": "Enable Sidebar"
+        },
+        "position": {
+          "type": "select",
+          "default": "right",
+          "label": "Position",
+          "options": ["left", "right"]
+        },
+        "width": {
+          "type": "text",
+          "default": "320px",
+          "label": "Width",
+          "placeholder": "e.g. 320px or 25%"
+        },
+        "show_on_homepage": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show on Homepage"
+        },
+        "show_on_pages": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show on Pages"
+        },
+        "show_on_posts": {
+          "type": "boolean",
+          "default": true,
+          "label": "Show on Posts"
+        }
+      }
+    },
+    "colors": {
+      "primary": {
+        "type": "color",
+        "default": "#0284c7",
+        "label": "Primary"
+      },
+      "secondary": {
+        "type": "color",
+        "default": "#7c3aed",
+        "label": "Secondary"
+      },
+      "accent": {
+        "type": "color",
+        "default": "#06b6d4",
+        "label": "Accent Highlight"
+      },
+      "background": {
+        "type": "color",
+        "default": "#ffffff",
+        "label": "Page Background"
+      },
+      "foreground": {
+        "type": "color",
+        "default": "#1f2937",
+        "label": "Text / Foreground"
+      }
+    },
+    "typography": {
+      "headingFont": {
+        "type": "text",
+        "default": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "label": "Heading Font"
+      },
+      "bodyFont": {
+        "type": "text",
+        "default": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "label": "Body Font"
+      }
+    }
+  }
+}

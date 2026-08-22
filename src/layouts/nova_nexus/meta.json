@@ -1,0 +1,189 @@
+{
+  "name": "Nova Nexus",
+  "version": "1.1.0",
+  "description": "A futuristic minimal glass layout with neon accents.",
+  "preview": "/preview/screenshot.png",
+  "author": {
+    "name": "Acroxa",
+    "url": "https://www.acroxa.com"
+  },
+
+  "stylesheets": [
+    "/layouts/framework/reset.css",
+    "/layouts/framework/variables.css",
+    "/layouts/framework/typography.css",
+    "/layouts/framework/components.css",
+    "/layouts/framework/utilities.css",
+    "/layouts/framework/layout-grid.css",
+    "/layouts/framework/layout-flex.css",
+    "/layouts/framework/animations.css",
+    "/layouts/framework/responsive.css",
+    "/layouts/framework/filter-effects.css"
+  ],
+
+  "customStyles": "body{background:linear-gradient(180deg,#0a0a14 0%,#1a1a2e 100%);color:rgba(255,255,255,0.9);min-height:100vh}.glass{background:rgba(10,10,20,0.7)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}html{scroll-behavior:smooth}::-webkit-scrollbar{width:12px}::-webkit-scrollbar-track{background:rgba(10,10,20,0.5)}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#00f0ff,#7c3aed);border-radius:6px}",
+
+  "customScripts": "document.addEventListener('DOMContentLoaded',function(){const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.style.opacity='1';entry.target.style.transform='translateY(0)'}})},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});document.querySelectorAll('.slide-up,.nn-card,.fade-in,.scale-up').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(30px)';el.style.transition='all 0.6s ease-out';observer.observe(el)})});",
+
+  "_migration_note": "routes[] removed in v1.1.0 — routing is now owned by CMS core (RouteResolver). Templates declared below.",
+
+  "templates": {
+    "homepage": "homepage",
+    "blog":     "blog",
+    "post":     "post",
+    "page":     "page",
+    "category": "category",
+    "landing":  "landing",
+    "404":      "404"
+  },
+
+  "widgetAreas": [
+    "sidebar",
+    "footer-col-1",
+    "footer-col-2",
+    "footer-col-3"
+  ],
+
+  "menuAreas": [
+    "primary",
+    "footer"
+  ],
+
+  "config": {
+    "layout": {
+      "sidebar": {
+        "enabled": {
+          "type":    "boolean",
+          "default": true,
+          "label":   "Enable Sidebar"
+        },
+        "position": {
+          "type":    "select",
+          "default": "right",
+          "label":   "Position",
+          "options": ["left", "right"]
+        },
+        "width": {
+          "type":    "text",
+          "default": "300px",
+          "label":   "Width",
+          "placeholder": "e.g. 300px or 25%"
+        },
+        "show_on_homepage": {
+          "type":    "boolean",
+          "default": true,
+          "label":   "Show on Homepage"
+        },
+        "show_on_pages": {
+          "type":    "boolean",
+          "default": true,
+          "label":   "Show on Pages"
+        },
+        "show_on_posts": {
+          "type":    "boolean",
+          "default": true,
+          "label":   "Show on Posts"
+        }
+      }
+    },
+    "colors": {
+      "primary": {
+        "type":    "color",
+        "default": "#00f0ff",
+        "label":   "Primary / Accent"
+      },
+      "secondary": {
+        "type":    "color",
+        "default": "#7c3aed",
+        "label":   "Secondary"
+      },
+      "accent": {
+        "type":    "color",
+        "default": "#ec4899",
+        "label":   "Accent Highlight"
+      },
+      "background": {
+        "type":    "color",
+        "default": "#0a0a14",
+        "label":   "Page Background"
+      }
+    },
+    "typography": {
+      "headingFont": {
+        "type":    "text",
+        "default": "'Oxanium', sans-serif",
+        "label":   "Heading Font",
+        "hint":    "CSS font-family value"
+      },
+      "bodyFont": {
+        "type":    "text",
+        "default": "'Inter', sans-serif",
+        "label":   "Body Font"
+      },
+      "baseFontSize": {
+        "type":    "range",
+        "default": 16,
+        "min":     12,
+        "max":     24,
+        "step":    1,
+        "unit":    "px",
+        "label":   "Base Font Size"
+      }
+    },
+    "homepage": {
+      "heroTitle": {
+        "type":        "text",
+        "default":     "Welcome to Nova Nexus",
+        "label":       "Hero Title",
+        "showOn":      "homepage"
+      },
+      "heroSubtitle": {
+        "type":        "textarea",
+        "default":     "Experience the future of web design.",
+        "label":       "Hero Subtitle",
+        "showOn":      "homepage"
+      },
+      "ctaPrimaryText": {
+        "type":    "text",
+        "default": "Explore Posts",
+        "label":   "CTA Button Text"
+      },
+      "ctaPrimaryUrl": {
+        "type":    "text",
+        "default": "/blog",
+        "label":   "CTA Button URL"
+      },
+      "postsPerRow": {
+        "type":    "select",
+        "default": "3",
+        "label":   "Posts Per Row",
+        "options": ["1", "2", "3", "4"]
+      }
+    },
+    "animations": {
+      "enabled": {
+        "type":    "boolean",
+        "default": true,
+        "label":   "Enable scroll animations"
+      },
+      "duration": {
+        "type":    "range",
+        "default": 600,
+        "min":     100,
+        "max":     2000,
+        "step":    100,
+        "unit":    "ms",
+        "label":   "Animation Duration"
+      }
+    }
+  },
+
+  "features": [
+    "Glassmorphism effects",
+    "Neon hover outlines",
+    "Scroll reveal animations",
+    "Responsive sidebar",
+    "Futuristic minimal design",
+    "Landing page support"
+  ]
+}
