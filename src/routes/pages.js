@@ -31,11 +31,20 @@ const VIEWS_DIR = path.join(__dirname, "../views");
 function loadViews() {
   const files = fs.readdirSync(VIEWS_DIR);
   const views = [];
+  const loadErrors = [];
 
   files.forEach(file => {
     if (!file.endsWith(".js")) return;
 
-    const mod = require(path.join(VIEWS_DIR, file));
+    let mod;
+    try {
+      mod = require(path.join(VIEWS_DIR, file));
+    } catch (err) {
+      // One broken view must never take down every admin page.
+      console.error(`[pages] Skipping broken view ${file}:`, err.message);
+      loadErrors.push({ file, message: err.message });
+      return;
+    }
 
     if (mod.meta && Array.isArray(mod.meta)) {
       mod.meta.forEach(pageMeta => {
@@ -44,11 +53,32 @@ function loadViews() {
           render: mod[pageMeta.render],   // resolve function reference
           __file: file
         });
-      });
-    }
-  });
+      })
+    }});
   console.log(`Loaded ${views.length} page(s) from ${VIEWS_DIR}`);
-  console.log(views.map(v => `  ${v.path} → ${v.render ? v.render.name : "no render fn"} (${v.__file})`).join("\n"));
+  // AcroxaJS impact edges: each admin page depends on its view source file,
+  // so a view change invalidates exactly the pages it renders (never the
+  // whole app). The dep key is the bare normalized absolute path — the same
+  // key space file-change invalidations query with. depend() overwrites, so
+  // rebuilds re-declare idempotently. graph._key normalizes lookups (win32).
+  try {
+    const graph = require("../core/runtime/graph");
+    for (const v of views) {
+      if (v.path && v.__file) {
+        graph.depend(
+          "page:" + v.path,
+          [path.join(VIEWS_DIR, v.__file).replace(/\\/g, "/")]
+        );
+      }
+    }
+  } catch (_) {}
+  if (process.env.NODE_ENV !== "production") {
+    console.log(views.map(v => `  ${v.path} → ${v.render ? v.render.name : "no render fn"} (${v.__file})`).join("\n"));
+  }
+  if (loadErrors.length) {
+    console.error(`[pages] ${loadErrors.length} view file(s) failed to load (routes skipped, rest live).`);
+  }
+  loadViews.errors = loadErrors;
   return views;
 }
 
@@ -89,6 +119,28 @@ function renderPageWrapper(req, res, options = {}) {
     maincss = true
   } = options;
 
+  let filteredContent = content;
+  try { filteredContent = require("../core/runtime/hookBus").run("page:beforeRender", content, { title, path: req.path }) || content; } catch (_) {}
+
+  // Fragment mode (AcroxaJS admin live updates): return the content region
+  // as JSON instead of a full document. Never HTML-wraps errors here —
+  // the client decides (redirect vs toast) from the status code.
+  const wantsFragment = req.query._frag === "content" || req.headers["x-acrx-fragment"] === "content";
+  if (wantsFragment) {
+    let rev = 0;
+    try { rev = require("../core/runtime/revision").get(); } catch (_) {}
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({
+      success: true,
+      html: filteredContent,
+      title: title || "Acroxa",
+      css: css || [],
+      js: normalizeScripts(js || []),
+      layout: layout || "full",
+      rev,
+    });
+  }
+
   const html = renderLayout({
     head: {
       title,
@@ -118,12 +170,14 @@ function renderPageWrapper(req, res, options = {}) {
             ? footer()
             : renderFooter()),
 
-    content,
+    content: filteredContent,
     injectScript: res.locals.injectTokenScript,
     layout
   });
 
-  res.send(html);
+  let out = html;
+  try { out = require("../core/runtime/hookBus").run("page:afterRender", html, { title, path: req.path }) || html; } catch (_) {}
+  res.send(out);
 }
 // ------------------- Login Page -------------------
 // V2: requireControlSession must pass before the login page is served.
@@ -198,10 +252,8 @@ pages.forEach(page => {
         let content = "";
 
         if (!page.contentType || page.contentType === "render") {
-          const renderFn =
-            typeof page.render === "string"
-              ? mod[page.render]
-              : page.render;
+          // render was resolved to a function reference by loadViews().
+          const renderFn = typeof page.render === "function" ? page.render : null;
 
           content =
             typeof renderFn === "function"
@@ -243,3 +295,7 @@ pages.forEach(page => {
 });
 
 module.exports = router;
+// Diagnostics + rebuild support (AcroxaJS pages HMR).
+module.exports.getPages = () => pages;
+module.exports.getLoadErrors = () => loadViews.errors || [];
+module.exports.VIEWS_DIR = VIEWS_DIR;

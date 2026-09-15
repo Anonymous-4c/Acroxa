@@ -35,6 +35,22 @@ const liveReloadServer = livereload.createServer({
   exts: ["html", "js", "css", "png", "jpg", "svg", "json"],
   delay: 500
 });
+// LiveReload binds async, so a busy 35729 (e.g. a second `npm run dev`
+// while one is already up) surfaces as an 'error' event, not a throw.
+// It is dev-only convenience — never let it kill the CMS.
+try {
+  const onLrError = (err) => {
+    if (err && err.code === "EADDRINUSE") {
+      console.warn("⚠️  LiveReload port 35729 busy — another dev server is likely running. Continuing without LiveReload.");
+    } else {
+      console.warn("⚠️  LiveReload error:", (err && err.message) || err);
+    }
+  };
+  if (liveReloadServer) {
+    if (typeof liveReloadServer.on === "function") liveReloadServer.on("error", onLrError);
+    if (liveReloadServer.server && typeof liveReloadServer.server.on === "function") liveReloadServer.server.on("error", onLrError);
+  }
+} catch (_) {}
 
 const watcher = chokidar.watch(
   [
@@ -64,10 +80,20 @@ const watcher = chokidar.watch(
 );
 
 watcher.on("change", (file) => {
-   console.log("🔄 LiveReload:", file);
-  liveReloadServer.refresh("/");
-});
+  const ext = path.extname(file).toLowerCase();
 
+  if (ext === ".css") {
+    // Tell LiveReload that only CSS changed.
+    liveReloadServer.refresh(file);
+    return;
+  }
+
+  // Unified dev strategy: src/ invalidation is owned by CMSHotReloader
+  // (scoped require.cache + atomic router/layout swaps + SSE). A broad
+  // full-page refresh here would destroy editor/caret/state, so we only
+  // log and let the hot-reloader + SSE notify affected roots.
+  // LiveReload "/" refresh is kept as a manual fallback only.
+});
 // Disable livereload injection on layout editor pages
 app.use((req, res, next) => {
   const disableRoutes = [
@@ -95,6 +121,9 @@ app.use((req, res, next) => {
 const layoutsBase = path.join(__dirname, "src/layouts");
 
 app.use("/acrx/assets", express.static(path.join(__dirname, "acrx/assets")));
+// Public visitor assets (analytics runtime, etc.). Distinct prefix so static
+// serving can never shadow /acr/api routes.
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 const frameworkPath = path.join(__dirname, "src/layouts");
 app.get(
   "/layouts/:layout/preview/screenshot.png",
@@ -360,6 +389,13 @@ try {
   if (global.acrx.route_uri?.setApp) {
     global.acrx.route_uri.setApp(app);
   }
+
+  // ── Persistent runtime shell (idempotent; safe across restarts) ──
+  try {
+    if (global.acrx?.runtime?.init) global.acrx.runtime.init(global.acrx);
+  } catch (err) {
+    console.warn("⚠️  Runtime shell init:", err.message);
+  }
   acrx.registerMenuItem({
   label: "Approvals",                    
   icon: "clipboard-check",               
@@ -439,18 +475,99 @@ async function initializeApp() {
     }
   } catch (e) { console.warn("⚠️  Hot reloader:", e.message); }
 
-  // Dynamic pages router
-  const loadPagesRouter = () => require('./src/routes/pages');
-  let pagesModule = loadPagesRouter();
-  app.use((req, res, next) => {
+  // Dynamic pages router — stable proxy mounted ONCE, rebuild swaps the inner
+  // router atomically (same pattern as loadRoutes/apiRegistry, §48). In-flight
+  // requests finish on the old router; a failed rebuild keeps it serving.
+  const pagesProxy = express.Router();
+  let currentPagesRouter = require('./src/routes/pages');
+  const _asPagesRouter = (m) => (typeof m === "function" ? m : (m && m.router)) || null;
+  try {
+    require("./src/core/runtime/registry").register({
+      type: "route", owner: "core", name: "admin-pages",
+      meta: { file: "src/routes/pages.js" },
+      dispose: null,
+    });
+  } catch (_) {}
+  pagesProxy.use((req, res, next) => {
     try {
-      const pagesRouter = loadPagesRouter();
-      pagesRouter(req, res, next);
+      const r = _asPagesRouter(currentPagesRouter);
+      if (!r || typeof r.handle !== "function") {
+        return res.status(500).send('Admin pages unavailable');
+      }
+      r.handle(req, res, next);
     } catch (err) {
-      console.error('Hot reload failed while loading pages router:', err.message);
-      res.status(500).send('Error loading updated admin pages');
+      console.error('Pages router dispatch failed:', err.message);
+      if (!res.headersSent) res.status(500).send('Error loading admin pages');
     }
   });
+  app.use(pagesProxy);
+
+  // Rebuild admin pages (views changed/added/removed). Clears pages.js +
+  // src/views (+ src/modules render helpers) from require.cache bounded to
+  // src/, re-requires fresh, swaps atomically. Never throws.
+  global.acrx.rebuildPagesRouter = (changedFiles = []) => {
+    const srcRoot = path.join(__dirname, "src");
+    const coreRoot = path.join(srcRoot, "core") + path.sep;
+    const drop = (abs) => {
+      try {
+        const resolved = require.resolve(abs);
+        // Never evict the process-stable runtime core as a rebuild side
+        // effect (see hot-reloader clearModuleScoped). Only an explicitly
+        // changed file from `changedFiles` may drop itself from core.
+        const explicitCore = (Array.isArray(changedFiles) ? changedFiles : [changedFiles])
+          .map((f) => { try { return require.resolve(path.isAbsolute(String(f)) ? String(f) : path.join(__dirname, String(f))); } catch (_) { return null; } })
+          .includes(resolved);
+        const mod = require.cache[resolved];
+        if (mod) {
+          for (const child of mod.children || []) {
+            try {
+              if (child.filename && child.filename.startsWith(srcRoot) && !child.filename.startsWith(coreRoot)) delete require.cache[child.filename];
+            } catch (_) {}
+          }
+        }
+        if (!explicitCore && resolved.startsWith(coreRoot)) return;
+        delete require.cache[resolved];
+      } catch (_) {}
+    };
+    try {
+      try { require("./src/core/runtime/events").emit("module:updated", { id: "views", stage: "invalidate" }); } catch (_) {}
+      drop(path.join(__dirname, "src/routes/pages.js"));
+      const dirs = ["src/views", "src/modules", "src/functions"];
+      for (const d of dirs) {
+        try {
+          for (const f of fs.readdirSync(path.join(__dirname, d))) {
+            if (!f.endsWith(".js")) continue;
+            drop(path.join(__dirname, d, f));
+          }
+        } catch (_) {}
+      }
+      for (const f of (Array.isArray(changedFiles) ? changedFiles : [changedFiles])) {
+        if (!f) continue;
+        const abs = path.isAbsolute(String(f)) ? String(f) : path.join(__dirname, String(f));
+        if (abs.startsWith(srcRoot)) drop(abs);
+      }
+      const fresh = require('./src/routes/pages');
+      const r = _asPagesRouter(fresh);
+      if (!r || typeof r.handle !== "function") throw new Error("rebuilt pages module exports no router");
+      currentPagesRouter = fresh; // atomic swap
+      const pages = (fresh.getPages && fresh.getPages()) || [];
+      const loadErrors = (fresh.getLoadErrors && fresh.getLoadErrors()) || [];
+      try { require("./src/core/runtime/revision").bump("pages:rebuild", "view"); } catch (_) {}
+      try {
+        require("./src/core/runtime/registry").mark("route:core:admin-pages", "active", { routes: pages.length });
+        require("./src/core/runtime/events").emit("module:updated", { id: "views", stage: "update" });
+        require("./src/core/sseHub").broadcast("page.updated", { source: "rebuildPagesRouter", routes: pages.length });
+      } catch (_) {}
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[pages] Rebuilt admin router (${pages.length} pages${loadErrors.length ? `, ${loadErrors.length} view(s) skipped` : ""}).`);
+      }
+      return { success: true, routes: pages.length, loadErrors, timestamp: new Date().toISOString() };
+    } catch (err) {
+      console.error('[pages] Rebuild failed — keeping previous router:', err.message);
+      try { require("./src/core/runtime/registry").mark("route:core:admin-pages", "failed", { lastError: err.message }); } catch (_) {}
+      return { success: false, error: err.message };
+    }
+  };
 
   // API routes
   const apiRoutes = require("./src/routes/api");
@@ -478,9 +595,9 @@ async function initializeApp() {
     app.use(`${API_BASE}`, apiRoutes.router || apiRoutes);
   }
 
-  // Stash reload functions
-  global.acrx.reloadPageRenderers = pagesModule.reloadPageRenderers;
-  global.acrx.invalidateMenuCache = pagesModule.invalidateMenuCache;
+  // Pages HMR is owned by global.acrx.rebuildPagesRouter (stable proxy above).
+  // reloadPageRenderers stays the notify shim from pluginAPI — never clobber
+  // it with undefined (pages.js exports no such function by design).
 
   // Load plugins
   try {
@@ -660,11 +777,10 @@ process.on("uncaughtException", (err) => {
 });
 
 
-process.on("unhandledRejection", (reason, promise) => {
+ process.on("unhandledRejection", (reason, promise) => {
    console.error("\n💥 UNHANDLED PROMISE REJECTION:");
    console.error("Promise:", promise);
    console.error("Reason:", reason);
    console.error("\n🛑 Shutting down due to unhandled rejection..");
   process.exit(1);
 });
- console.log(`🔒 ${process.env.NODE_ENV}`)
