@@ -235,6 +235,9 @@ pages.forEach(page => {
   }
 
   // ── Protected pages (default) ────────────────────────────────────────────
+  // Handler is a named export (handleProtectedPage) so the dev-only testing
+  // aliases below can render the same pages with a stub identity. Same code
+  // path, same fragment support, no auth bypass anywhere else.
   router.get(
     page.path,
     verifyAPIToken,
@@ -247,55 +250,111 @@ pages.forEach(page => {
 
     attachAuthScript,
 
-    async (req, res) => {
-      try {
-        let content = "";
-
-        if (!page.contentType || page.contentType === "render") {
-          // render was resolved to a function reference by loadViews().
-          const renderFn = typeof page.render === "function" ? page.render : null;
-
-          content =
-            typeof renderFn === "function"
-              ? await renderFn(req, res)
-              : renderFn;
-        }
-        else if (page.contentType === "raw") {
-          content =
-            typeof page.content === "function"
-              ? await page.content(req, res)
-              : page.content;
-        }
-
-        let sidebar, footer, header;
-        if (page.layout === "full") {
-          sidebar = renderSidebar;
-          footer  = renderFooter;
-          header  = renderHeader;
-        }
-
-        renderPageWrapper(req, res, {
-          title:   page.title   || "Acroxa",
-          content,
-          css:     page.css     || [],
-          js:      page.js      || [],
-          header:  header  || page.header,
-          sidebar: sidebar || page.sidebar,
-          footer:  footer  || page.footer,
-          layout:  page.layout  || "full",
-          maincss: page.maincss !== false,
-        });
-
-      } catch (err) {
-        console.error("Page render error:", page.path, err);
-        res.status(500).send(renderPage_500());
-      }
-    }
+    async (req, res) => handleProtectedPage(page, req, res)
   );
 });
+
+// ---------------- Dev-only E2E testing aliases ----------------
+// Double-gated: E2E_TEST_ROUTER=1 AND non-production. Serves the same admin
+// renders under /acrx/testing/* with a stub admin identity so Playwright can
+// verify the runtime without credentials. Lives inside the pages router (and
+// therefore inside the rebuild proxy) so view hot-reloads — including brand-
+// new view files — are picked up with no extra wiring. GET-only, no
+// mutations, no auth-redirect script. Never loads in production.
+if (process.env.E2E_TEST_ROUTER === "1" && process.env.NODE_ENV !== "production") {
+  console.warn("[testing] ENABLED (dev-only): /acrx/testing/* serves admin renders without auth. Never enable in production.");
+
+  const testingStub = (req, res, next) => {
+    req.user = { id: "e2e-test", username: "e2e-test", role: "admin", roles: ["admin"] };
+    res.locals.injectTokenScript = "";
+    next();
+  };
+
+  router.get("/acrx/testing", (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({
+      success: true,
+      urls: pages
+        .filter((p) => p && typeof p.path === "string" && p.public !== true)
+        .map((p) => "/acrx/testing" + p.path.replace(/^\/acrx/, "")),
+    });
+  });
+
+  router.get("/acrx/testing/api/system/runtime", (req, res) => {
+    try {
+      return require("../controllers/runtimeController").getSnapshot(req, res);
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  pages.forEach((page) => {
+    if (!page || typeof page.path !== "string" || page.public === true) return;
+    router.get(
+      "/acrx/testing" + page.path.replace(/^\/acrx/, ""),
+      testingStub,
+      (req, res, next) => {
+        const roles = getAllowedRolesByPath(page.path);
+        if (!roles) return next();
+        return requireRoles(roles)(req, res, next);
+      },
+      async (req, res) => handleProtectedPage(page, req, res)
+    );
+  });
+} else if (process.env.NODE_ENV !== "production") {
+  console.log("[testing] disabled (set E2E_TEST_ROUTER=1 to enable dev E2E aliases).");
+}
+
+// Shared protected-page renderer (pages.js + testing router).
+async function handleProtectedPage(page, req, res) {
+  try {
+    let content = "";
+
+    if (!page.contentType || page.contentType === "render") {
+      // render was resolved to a function reference by loadViews().
+      const renderFn = typeof page.render === "function" ? page.render : null;
+
+      content =
+        typeof renderFn === "function"
+          ? await renderFn(req, res)
+          : renderFn;
+    }
+    else if (page.contentType === "raw") {
+      content =
+        typeof page.content === "function"
+          ? await page.content(req, res)
+          : page.content;
+    }
+
+    let sidebar, footer, header;
+    if (page.layout === "full") {
+      sidebar = renderSidebar;
+      footer  = renderFooter;
+      header  = renderHeader;
+    }
+
+    renderPageWrapper(req, res, {
+      title:   page.title   || "Acroxa",
+      content,
+      css:     page.css     || [],
+      js:      page.js      || [],
+      header:  header  || page.header,
+      sidebar: sidebar || page.sidebar,
+      footer:  footer  || page.footer,
+      layout:  page.layout  || "full",
+      maincss: page.maincss !== false,
+    });
+
+  } catch (err) {
+    console.error("Page render error:", page.path, err);
+    if (!res.headersSent) res.status(500).send(renderPage_500());
+  }
+}
 
 module.exports = router;
 // Diagnostics + rebuild support (AcroxaJS pages HMR).
 module.exports.getPages = () => pages;
 module.exports.getLoadErrors = () => loadViews.errors || [];
 module.exports.VIEWS_DIR = VIEWS_DIR;
+// Shared renderer for the dev-only testing router (same code path as above).
+module.exports.handleProtectedPage = handleProtectedPage;
