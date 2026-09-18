@@ -20,7 +20,8 @@ function classify(file) {
   if (norm.includes("/views/")) return { kind: "view", scope: "view" };
   if (norm.includes("/routes/")) return { kind: "route", scope: "module" };
   if (norm.includes("/controllers/") || norm.includes("/services/")) return { kind: "api", scope: "module" };
-  if (norm.includes("acrx/assets/js")) return { kind: "frontend", scope: "component" };
+  if (norm.includes("acrx/assets/js") || norm.includes("public/assets/")) return { kind: "frontend", scope: "component" };
+  if (norm.includes("/extensions/") || norm.includes("/plugins/")) return { kind: "extension", scope: "module" };
   if (norm.includes("/core/") || norm.includes("/modules/") || norm.includes("/functions/")) return { kind: "backend", scope: "module" };
   if (lower.endsWith(".json") && (lower.includes("config") || lower.includes("paths"))) return { kind: "config", scope: "global" };
   if (norm.includes("/models/")) return { kind: "backend", scope: "module" };
@@ -46,6 +47,7 @@ function handleFileChange(file, { operation = "change" } = {}) {
   }
   try {
     const inv = require("./invalidate");
+    try { require("./debug").log("plan", `${c.kind}/${c.scope} -> strategy=${plan.strategy} owner=${owner}`); } catch (_) {}
     invalidation = inv.invalidate({
       type: c.kind, id: resource, scope: plan.strategy === "stylesheet-refresh" ? "stylesheet" : c.scope,
       reason: `${operation}:${path.basename(String(file))}`, strategy: plan.strategy,

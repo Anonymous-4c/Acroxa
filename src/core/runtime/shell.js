@@ -65,6 +65,13 @@ function snapshot() {
   try { logs = require("../logStream").status(); } catch (_) {}
   let perf = { stages: {} };
   try { perf = require("./perf").stats(); } catch (_) {}
+  let extensions = { total: 0, enabled: 0, conflicts: 0 };
+  let conflicts = [];
+  try { extensions = require("./extensions").stats(); } catch (_) {}
+  try { conflicts = require("./extensions").detectConflicts().slice(0, 20); } catch (_) {}
+  // AcroxaJS Phase 10: render snapshot stats (live page/version/bytes).
+  let snapshots = { pages: 0, versions: 0, bytes: 0 };
+  try { snapshots = require("./render/snapshot").stats(); } catch (_) {}
   return {
     bootedAt: _bootedAt,
     uptimeMs: _bootedAt ? Date.now() - _bootedAt : 0,
@@ -77,6 +84,9 @@ function snapshot() {
     targets,
     logs,
     perf,
+    extensions,
+    conflicts,
+    snapshots,
   };
 }
 

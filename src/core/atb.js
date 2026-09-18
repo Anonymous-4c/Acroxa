@@ -23,7 +23,7 @@ function initAutoBackup(options = {}) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `backup-${timestamp}.zip`;
     const filePath = path.join(config.backupDir, fileName);
-s
+
     const output = fs.createWriteStream(filePath);
     const archive = archiver("zip", { zlib: { level: 9 } });
 

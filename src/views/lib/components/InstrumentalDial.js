@@ -35,7 +35,7 @@
 //     action: string                // label for the trailing-arrow CTA
 //   }
 //
-const { el, escapeHTML, icon, escapeAttr } = require('../framework');
+const { el, escapeHTML, icon } = require('../framework');
 
 const DEFAULT_SETTINGS = {
   interactive: true,
@@ -197,8 +197,12 @@ function InstrumentDial({
     el('div', { class: cls('slot') }, instrumentCard(item, i))
   ).join('');
 
-  const serializedItems = escapeAttr(JSON.stringify(items));
-  const serializedSettings = escapeAttr(JSON.stringify(s));
+  // NOTE: pass raw JSON here — el() already escapeAttr()s every attribute
+  // value exactly once. Pre-escaping with escapeAttr() here would double-
+  // encode quotes (&quot; -> &amp;quot;), so getAttribute() would return
+  // `[{&quot;...}]` instead of valid JSON and JSON.parse would throw.
+  const serializedItems = JSON.stringify(items);
+  const serializedSettings = JSON.stringify(s);
 
   const headerBlock = (eyebrow || heading || description)
     ? el('div', { class: cls('page-head') },

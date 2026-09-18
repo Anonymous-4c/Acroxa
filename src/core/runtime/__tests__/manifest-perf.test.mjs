@@ -55,7 +55,7 @@ describe("manifest", () => {
     assert.equal(res.headers["Cache-Control"], "no-store");
     const b = res.body;
     assert.equal(b.success, true);
-    assert.equal(b.runtime, "acroxajs/1");
+    assert.equal(b.runtime, "acroxajs/2");
     assert.equal(typeof b.rev, "number");
     assert.equal(typeof b.bootId, "string");
     assert.ok(Array.isArray(b.transports));

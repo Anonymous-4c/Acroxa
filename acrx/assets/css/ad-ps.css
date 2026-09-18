@@ -361,13 +361,13 @@ label.box-cbx:has(input:checked) .cbx:hover{
     align-items: center;
     min-height: 40px;
 }
-.sec-wrap, .dropdown-toggle, .pp-dropdown-toggle, .button-pst, .u-chip, .split-dropdown-action{
+.sec-wrap, .dropdown-toggle, .pp-dropdown-toggle, .button-pst, .u-chip, .split-dropdown-action, .btn-act, .header-btn{
     position:relative;
     isolation:isolate;
     border: none !important;
 }
 
-.sec-wrap::before, .dropdown-toggle::before, .pp-dropdown-toggle::before, .button-pst::before, .u-chip::before, .split-dropdown-action::before{
+.sec-wrap::before, .dropdown-toggle::before, .pp-dropdown-toggle::before, .button-pst::before, .u-chip::before, .split-dropdown-action::before, .btn-act::before, .seo-score::before{
     content:"";
     position:absolute;
     inset:0;

@@ -1,4 +1,4 @@
-﻿// ./src/views/editor.js
+// ./src/views/editor.js
 const {
 	el,
 	div,
@@ -49,7 +49,7 @@ function renderSlashMenu() {
 		{
 			slug: "code-block",
 			label: "Code Block",
-			icon: "code"
+			icon: "terminal"
 		},
 		{
 			slug: "columns",
@@ -85,6 +85,31 @@ function renderSlashMenu() {
 			slug: "divider",
 			label: "Divider",
 			icon: "minus"
+		},
+		{
+			slug: "tabs",
+			label: "Tabs",
+			icon: "folder"
+		},
+		{
+			slug: "accordion",
+			label: "Accordion",
+			icon: "list"
+		},
+		{
+			slug: "timeline",
+			label: "Timeline",
+			icon: "timeline"
+		},
+		{
+			slug: "features",
+			label: "Features",
+			icon: "shapes"
+		},
+		{
+			slug: "section",
+			label: "Section",
+			icon: "square"
 		},
 		{
 			slug: "embed",
@@ -146,6 +171,11 @@ function renderToolbar() {
 				dataTitle: "Italic"
 			}, icon("italic", "solid")),
 			el("button", {
+				id: "toolbar-underline",
+				class: "toolbar-btn",
+				dataTitle: "Underline"
+			}, icon("underline", "solid")),
+			el("button", {
 				id: "toolbar-strike",
 				class: "toolbar-btn",
 				dataTitle: "Strike"
@@ -155,6 +185,11 @@ function renderToolbar() {
 				class: "toolbar-btn",
 				dataTitle: "Inline Code"
 			}, icon("code", "solid")),
+			el("button", {
+				id: "toolbar-link",
+				class: "toolbar-btn",
+				dataTitle: "Link"
+			}, icon("link", "solid")),
 			el("button", {
 				id: "toolbar-blockquote",
 				class: "toolbar-btn",
@@ -365,12 +400,33 @@ function renderEditor() {
 				el("div", {
 					class: "header-separator"
 				}),
-				Toggle({
-					id: "editor-autosave-toggle",
-					label: "Auto Save",
-					checked: true
-				})
+			Toggle({
+				id: "editor-autosave-toggle",
+				label: "Auto Save",
+				checked: true
+			}),
+			el("span", {
+				class: "header-sep"
+			}),
+			el(
+				"button", {
+					id: "editor-undo-btn",
+					class: "header-btn",
+					dataTitle: "Undo (Ctrl+Z)",
+					ariaLabel: "Undo (Ctrl+Z)"
+				},
+				icon("rotate-left")
 			),
+			el(
+				"button", {
+					id: "editor-redo-btn",
+					class: "header-btn",
+					dataTitle: "Redo (Ctrl+Shift+Z)",
+					ariaLabel: "Redo (Ctrl+Shift+Z)"
+				},
+				icon("rotate-right")
+			)
+		),
 
 			// CENTER
 			div({
@@ -395,12 +451,7 @@ function renderEditor() {
 							id: "editor-cmdk-kbd"
 						},
 						"⌘K"
-					),
-
-					div({
-						id: "editor-cmdk-dropdown",
-						class: "cmdk-dropdown"
-					})
+					)
 				)
 			),
 			div({
@@ -474,34 +525,47 @@ function renderEditor() {
 					class: "acrx-editor-sidebar d-flex flex-col"
 				},
 
-				div({
-						class: "sidebar-tabs d-flex flex-row"
-					},
+			div({
+					class: "sidebar-tabs d-flex flex-row",
+					role: "tablist",
+					ariaLabel: "Left sidebar panels"
+				},
 
-					el("button", {
-						id: "sidebar-left-btn-layers",
-						class: "sidebar-tab active"
-					}, icon("layer-group"), "Layers"),
+				el("button", {
+					id: "sidebar-left-btn-layers",
+					class: "sidebar-tab active",
+					role: "tab",
+					ariaSelected: "true",
+					ariaControls: "sidebar-left-panel-layers"
+				}, icon("layer-group"), "Layers"),
 
-					el("button", {
-						id: "sidebar-left-btn-widgets",
-						class: "sidebar-tab"
-					}, icon("cubes"), "Widgets"),
+				el("button", {
+					id: "sidebar-left-btn-widgets",
+					class: "sidebar-tab",
+					role: "tab",
+					ariaSelected: "false",
+					ariaControls: "sidebar-left-panel-widgets"
+				}, icon("cubes"), "Widgets"),
 
-					el("button", {
-						id: "sidebar-left-btn-patterns",
-						class: "sidebar-tab"
-					}, icon("diamonds-4"), "Patterns")
-				),
+				el("button", {
+					id: "sidebar-left-btn-patterns",
+					class: "sidebar-tab",
+					role: "tab",
+					ariaSelected: "false",
+					ariaControls: "sidebar-left-panel-patterns"
+				}, icon("diamonds-4"), "Patterns")
+			),
 
 				div({
 						class: "sidebar-content"
 					},
 
-					div({
-							id: "sidebar-left-panel-layers",
-							class: "sidebar-panel active"
-						},
+				div({
+						id: "sidebar-left-panel-layers",
+						class: "sidebar-panel active",
+						role: "tabpanel",
+						ariaLabelledby: "sidebar-left-btn-layers"
+					},
 						div({
 								id: "layers-tree",
 								class: "layers-tree"
@@ -567,15 +631,19 @@ function renderEditor() {
 						)
 					),
 
-					div({
-						id: "sidebar-left-panel-widgets",
-						class: "sidebar-panel"
-					}),
+				div({
+					id: "sidebar-left-panel-widgets",
+					class: "sidebar-panel",
+					role: "tabpanel",
+					ariaLabelledby: "sidebar-left-btn-widgets"
+				}),
 
-					div({
-						id: "sidebar-left-panel-patterns",
-						class: "sidebar-panel"
-					})
+				div({
+					id: "sidebar-left-panel-patterns",
+					class: "sidebar-panel",
+					role: "tabpanel",
+					ariaLabelledby: "sidebar-left-btn-patterns"
+				})
 				)
 			),
 
@@ -595,125 +663,12 @@ function renderEditor() {
 						id: "editor-canvas",
 						class: "acrx-editor-canvas d-flex flex-col"
 					},
-					div({
-						id: "canvas-main-input",
-						class: "canvas-input",
-						contenteditable: "true",
-						dataPlaceholder: "Start typing or use / to add a block"
-					}),
-					div({
-							id: "block-wrap-t_1",
-							class: "block-wrap",
-							dataForBlockId: "t-1"
-						},
-						el("label", {
-							class: "block-handle",
-							for: "block-t_1-check",
-							dataHandleBlockId: "t-1"
-						}, icon("grip-dots-vertical"), Input({
-							id: "block-t_1-check",
-							type: "checkbox",
-							className: "block-check hidden"
-						})),
-						div({
-								id: "block-t_1",
-								dataIndex: "1",
-								dataDepth: "0",
-								class: "block",
-								dataBlockId: "t-1"
-							},
-							div({
-									id: "child_t1-t",
-									dataIndex: "2",
-									dataDepth: "1",
-									dataBlockId: "t1-t",
-									type: "text",
-									class: "block-child",
-									contenteditable: "true",
-									dataPlaceholder: "Start typing..."
-								},
-								div({
-										id: "child_t1-t-p",
-										dataIndex: "3",
-										dataDepth: "2",
-										dataBlockId: "t1-t-p",
-										type: "paragraph",
-										class: "block-child",
-										contenteditable: "true",
-									},
-									div({
-											id: "child_t1-t-p-p",
-											dataIndex: "4",
-											dataDepth: "3",
-											dataBlockId: "t1-t-p-p",
-											type: "paragraph",
-											class: "block-child",
-											contenteditable: "true"
-										},
-										"Hello"
-									),
-									div({
-											id: "child_t1-t-p-b",
-											dataIndex: "5",
-											dataDepth: "3",
-											dataBlockId: "t1-t-p-b",
-											type: "textBold",
-											class: "block-child",
-											contenteditable: "true"
-										},
-										"World !"
-									)
-								)
-							),
-							div({
-									id: "child_t1-l",
-									dataIndex: "6",
-									dataDepth: "1",
-									dataBlockId: "t1-l",
-									type: "OrderedList",
-									class: "block-child",
-									contenteditable: "true",
-								},
-								div({
-										id: "child_t1-l-li",
-										dataIndex: "7",
-										dataDepth: "2",
-										dataBlockId: "t1-l-li",
-										type: "listItem",
-										class: "block-child",
-										contenteditable: "true",
-										dataPlaceholder: "Start typing..."
-									},
-									"List Item 1"
-								),
-								div({
-										id: "child_t1-l-li2",
-										dataIndex: "8",
-										dataDepth: "2",
-										dataBlockId: "t1-l-li2",
-										type: "listItem",
-										class: "block-child",
-										contenteditable: "true",
-										dataPlaceholder: "Start typing..."
-									},
-									"List Item 2"
-								)
-							),
-							div({
-									id: "child_t1-h",
-									dataIndex: "8",
-									dataDepth: "1",
-									dataBlockId: "t1-h",
-									type: "heading",
-									level: "1",
-									class: "block-child",
-									contenteditable: "true",
-									dataPlaceholder: "Start typing..."
-								},
-								"Heading"
-							)
-						)
-					)
+				div({
+					id: "canvas-main-input",
+					class: "canvas-input is-empty",
+					contenteditable: "true",
+					dataPlaceholder: "Start typing or use / to add a block"
+				}),
 				)
 			),
 
@@ -726,39 +681,56 @@ function renderEditor() {
 					class: "acrx-editor-rg-sidebar d-flex flex-col"
 				},
 
-				div({
-						class: "sidebar-tabs d-flex flex-row"
-					},
-					el("button", {
-						id: "sidebar-right-btn-post",
-						class: "sidebar-tab active"
-					}, icon("file-lines"), "Post"),
-					el("button", {
-						id: "sidebar-right-btn-seo",
-						class: "sidebar-tab"
-					}, icon("chart-line"), "SEO"),
+			div({
+					class: "sidebar-tabs d-flex flex-row",
+					role: "tablist",
+					ariaLabel: "Right sidebar panels"
+				},
+				el("button", {
+					id: "sidebar-right-btn-post",
+					class: "sidebar-tab active",
+					role: "tab",
+					ariaSelected: "true",
+					ariaControls: "sidebar-right-panel-post"
+				}, icon("file-lines"), "Post"),
+				el("button", {
+					id: "sidebar-right-btn-seo",
+					class: "sidebar-tab",
+					role: "tab",
+					ariaSelected: "false",
+					ariaControls: "sidebar-right-panel-seo"
+				}, icon("chart-line"), "SEO"),
 
-					el("button", {
-						id: "sidebar-right-btn-settings",
-						class: "sidebar-tab"
-					}, icon("cubes"), "Block")
-				),
+				el("button", {
+					id: "sidebar-right-btn-settings",
+					class: "sidebar-tab",
+					role: "tab",
+					ariaSelected: "false",
+					ariaControls: "sidebar-right-panel-settings"
+				}, icon("cubes"), "Block")
+			),
 
 			div({
 					class: "sidebar-content"
 				},
 
-				div({
+			div({
 					id: "sidebar-right-panel-post",
-					class: "sidebar-panel"
+					class: "sidebar-panel active",
+					role: "tabpanel",
+					ariaLabelledby: "sidebar-right-btn-post"
 				}),
-				div({
+			div({
 					id: "sidebar-right-panel-seo",
-					class: "sidebar-panel active"
+					class: "sidebar-panel",
+					role: "tabpanel",
+					ariaLabelledby: "sidebar-right-btn-seo"
 				}),
-				div({
+			div({
 					id: "sidebar-right-panel-settings",
-					class: "sidebar-panel"
+					class: "sidebar-panel",
+					role: "tabpanel",
+					ariaLabelledby: "sidebar-right-btn-settings"
 				})
 			)
 		
@@ -865,10 +837,15 @@ module.exports.meta = [{
 	"css": [
 		"/acrx/assets/css/ad-st.css",
 		"/acrx/assets/css/ad-ed.css",
+		"/acrx/assets/css/ad-ed-app.css",
+		"/acrx/assets/css/ad-components.css",
 	],
 
 	"js": [
-		"/acrx/assets/js/system/_shared.js",
+		{
+			"src": "/acrx/assets/js/hljs.js",
+			"type": "text/javascript"
+		},
 		{
 			"src": "/acrx/assets/js/editor.js",
 			"type": "module"

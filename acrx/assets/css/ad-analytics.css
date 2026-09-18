@@ -1,0 +1,274 @@
+/* acrx/assets/css/ad-analytics.css
+ *
+ * Acroxa Analytics dashboard — native admin styling.
+ * Scoped to .analytics-page. Reuses the shared design system
+ * (metric-card, widget.card, ttc rows, btn) and only adds what the
+ * analytics view needs: KPI grid, tabs, charts, insight rows, menus.
+ * Neutral surfaces; color reserved for data and severity pills.
+ */
+
+.analytics-page .analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── KPI strip ─────────────────────────────────────────────── */
+
+.analytics-page .overview-metrics.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.analytics-page .metric-card .metric-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-page .metric-change {
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.analytics-page .metric-change.up { color: var(--color-success, #15803d); }
+.analytics-page .metric-change.down { color: var(--color-danger, #b91c1c); }
+.analytics-page .metric-change.steady { color: var(--color-primary-400); }
+
+/* ── Section tabs (approvals pattern) ──────────────────────── */
+
+.analytics-page .header-info-sec .links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-primary-300);
+  margin-bottom: 1rem;
+}
+
+.analytics-page .header-info-sec .links .pages {
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.analytics-page .header-info-sec .links .pages:hover {
+  color: var(--color-primary-800);
+}
+
+.analytics-page .header-info-sec .links .pages.active {
+  color: var(--color-primary-900);
+  border-bottom-color: var(--color-primary-700);
+}
+
+.analytics-page .header-info-sec .links sep {
+  width: 1px;
+  height: 1.1rem;
+  background: var(--color-primary-300);
+  margin: 0 0.25rem;
+}
+
+/* ── Two-column rows ───────────────────────────────────────── */
+
+.analytics-page .grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* ── Chart panels ──────────────────────────────────────────── */
+
+.analytics-page .chart-body {
+  position: relative;
+  min-height: 220px;
+  padding: 0.5rem;
+}
+
+.analytics-page .chart-body canvas {
+  max-width: 100%;
+}
+
+.analytics-page .chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--color-primary-300);
+  font-size: 2.5rem;
+}
+
+/* ── Tables (shared ttc anatomy) ───────────────────────────── */
+
+.analytics-page .ttc-pi {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid var(--color-primary-200);
+}
+
+.analytics-page .ttc-pi:last-child {
+  border-bottom: 0;
+}
+
+.analytics-page .ttc-pi .name-post {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-page .ttc-pi sep {
+  width: 1px;
+  height: 1rem;
+  background: var(--color-primary-200);
+  flex: none;
+}
+
+.analytics-page .acrx-itn {
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-page .status-post[data-="blue"] {
+  color: var(--color-info, #0369a1);
+  background: var(--color-info-bg, #e0f2fe);
+}
+
+.analytics-page .status-post[data-="orange"] {
+  color: var(--color-warning, #ca8a04);
+  background: var(--color-warning-bg, #fef9c3);
+}
+
+.analytics-page .status-post[data-="red"] {
+  color: var(--color-danger, #b91c1c);
+  background: var(--color-danger-bg, #fee2e2);
+}
+
+.analytics-page .status-post[data-="green"] {
+  color: var(--color-success, #15803d);
+  background: var(--color-success-bg, #dcfce7);
+}
+
+/* ── Insight / anomaly rows ────────────────────────────────── */
+
+.analytics-page .insight-row,
+.analytics-page .anomaly-row {
+  padding: 0.8rem 0.25rem;
+  border-bottom: 1px solid var(--color-primary-200);
+}
+
+.analytics-page .insight-row:last-child,
+.analytics-page .anomaly-row:last-child {
+  border-bottom: 0;
+}
+
+.analytics-page .insight-icon,
+.analytics-page .anomaly-icon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-600);
+  font-size: 1.05rem;
+}
+
+.analytics-page .anomaly-icon {
+  background: var(--color-warning-bg, #fef9c3);
+  color: var(--color-warning, #ca8a04);
+}
+
+.analytics-page .insight-text,
+.analytics-page .anomaly-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.analytics-page .insight-suggestion {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.analytics-page .btn-act {
+  border: 1px solid var(--color-primary-300);
+  background: transparent;
+  border-radius: 8px;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-primary-500);
+}
+
+.analytics-page .btn-act:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+
+/* ── Date-range menu ───────────────────────────────────────── */
+
+.analytics-page #date-range-menu {
+  position: absolute;
+  z-index: 60;
+  min-width: 190px;
+  background: var(--color-primary-50, #fff);
+  border: 1px solid var(--color-primary-300);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  padding: 0.35rem;
+}
+
+.analytics-page #date-range-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.analytics-page #date-range-menu button:hover {
+  background: var(--color-primary-100);
+}
+
+.analytics-page .analytics-header {
+  position: relative;
+}
+
+/* ── Loading state ─────────────────────────────────────────── */
+
+.analytics-page .loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .analytics-page .overview-metrics.grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .analytics-page .overview-metrics.grid,
+  .analytics-page .grid-2col {
+    grid-template-columns: 1fr;
+  }
+}

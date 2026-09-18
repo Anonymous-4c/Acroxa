@@ -148,7 +148,89 @@ verbose logs, knob, detailed diagnostics. Production: deterministic boot,
 content-hash asset tags, no watcher machinery, slim visitor runtime, admin
 runtime only on `/acrx/*`, privileged endpoints admin-gated.
 
-## 9. Known limitations (honest)
+## 9a. v2 additions (RC/RR/RT + extensions + generations)
+
+- `POST /acr/api/runtime/rc|rr|rt` — versioned aliases over
+  `target-plan/fragment/invalidate` (legacy keeps working). See
+  `docs/ACROXAJS_RC_RR_RT.md`. RC explains WHY, RR embeds
+  `verify{hash,bytes}` + `generation`, RT validates ops (409 on stale,
+  escalation on critical). SSE carries `seq`/`generation` (=rev).
+- Extension registry (`src/core/runtime/extensions.js`, code-first via
+  `acrx.registerExtension`) with semver manifests, enable/disable,
+  and explanatory conflict detection. See `docs/ACROXAJS_EXTENSIONS.md`.
+- Stable boundaries: section/group/hero containers emit
+  `boundary:core:<name>.<id>` + `data-acrx-rev/generation`; interactive
+  widgets carry `data-acrx-rev/generation`; `targets` stores per-target
+  `generation` (=rev at render).
+- Browser: `AcroxaDomPatch.patchWithGeneration/queuePatch` (stale-drop,
+  verify, rollback, rAF coalescing), hydration `update/updateSubtree`
+  + component versioning + 2000-entry live cap, visitor runtime with
+  transaction gate, generation guards, details/media/scroll preservation,
+  SSE→poll fallback, and a visitor-safe stale banner (`diagnose()`).
+  Admin `AcroxaTargeted` prefers rc/rr/rt with legacy fallback.
+- Safety: global Express error boundary (prod-redacted), public runtime
+  rate limit (120/min/IP), redacted public 500s, pipeline/planner
+  `extension` kind, hot-reloader owner-scoped extension reload.
+
+## 9b. v3 additions (render tree, snapshots, diff & patch protocol)
+
+Phases 1–10 add the canonical render pipeline on top of the proven chain:
+
+- **Render context** (`src/core/runtime/render/context.js`): AsyncLocalStorage-
+  threaded; `el()` records the content-region tree + deps when a context is
+  active (zero behavior change without one). `framework.depend()` records
+  data/service deps; flushed into `graph.js` on successful render only.
+  `el()` now treats `key` as an identity prop → `data-acrx-key` (never a raw
+  HTML attribute).
+- **Render tree** (`render/tree.js`): hierarchy reconstructed from flat
+  recorded nodes by html containment (no parsing, no evaluation-order
+  issues). Identity priority: `data-acrx-id` > explicit key > position.
+- **Snapshots** (`render/snapshot.js`): per-page monotonic version + content
+  hash + serialized tree + history (last 20). `since()` is the resync source.
+  Invalidation STALE-MARKS snapshots (cache validity) but keeps history —
+  history is the diff source; destroying it would force every update to be a
+  full-html fallback.
+- **Diff engine** (`src/core/runtime/diff/index.js`): pure, DOM-free op diff
+  — `setHtml/setAttr/removeAttr/replaceSubtree/insert/remove/move`. Keyed
+  list diff with move detection; unchanged subtrees short-circuit; rev/
+  generation attrs are excluded from attr diffs; conservative
+  `replaceSubtree` on unkeyed structural mismatch (correctness > minimality).
+- **Patch protocol** (`diff/patch.js`): envelope `{type:"render.patch",
+  page, patchId, fromVersion, toVersion, ops}` — strict validation; the
+  client applies ops only when `fromVersion` matches its committed content
+  version, else the full-html swap IS the resync (server rendered fresh).
+- **Wiring**: admin full renders commit the content snapshot and stamp
+  `data-acrx-content-version` on `#acrx-content` (`modules/layout.js`);
+  `?_frag=content` responses always carry `contentVersion` and carry `ops`
+  when the diff is expressible (≤40 ops, same-shape roots). The admin
+  runtime version-gates op patches (`AcroxaDomPatch.applyOps`) and falls
+  back to the proven region swap otherwise.
+- **Render scheduler** (`render/scheduler.js`): per-page render fence —
+  out-of-order renders of the same page can never overwrite (newest valid
+  state wins). Render 5xx surfaces as a stale banner with a recovery hint.
+- **Cache layers** (`src/core/runtime/cache/layers.js`): visitor output
+  cache (separate store), data cache, tag API (`cache.invalidateTag`), and
+  strategies that all affect behavior: `no-cache`, `cache-first`,
+  `revalidate`, `stale-while-revalidate` (grace window), `invalidation-driven`.
+  Policy reads the FLAT `runtime` settings section; visitor entries carry
+  `route:<path>` deps for targeted invalidation; structural layout changes
+  drop the visitor store (every page wraps the layout).
+- **Settings**: new flat `runtime` section in both Settings models +
+  `VALID_SECTIONS` + `/acrx/system/acrxjs` admin page
+  (`system/acrxjs-runtime.js`) — cache strategy/TTL/grace/size, inspector,
+  patch log, live stage timings from `GET /acr/api/system/runtime`.
+- **Hooks**: `render:afterSnapshot`, `render:afterDiff`, `render:patchSent`,
+  `cache:hit`, `cache:miss` fired at real lifecycle points (in `KNOWN_HOOKS`).
+- **APIs**: `GET /acr/api/runtime/snapshot?page=` (admin) — snapshot fetch +
+  resync info; `pluginAPI.invalidateCacheTag/invalidateCacheDep/
+  renderSnapshot/snapshotStats` (read/evict only — closed core enforced).
+- **Fixture page**: seed creates `acroxajs-fixture` (published, tabs widget)
+  so visitor target-patching is proven on a real seeded page.
+- **Inspector**: knob gains a `patches` tab (op/target/before/after/rev/
+  duration from real runtime data) + overview shows op patches, content
+  version, and snapshot counts.
+
+## 9c. Known limitations (honest)
 
 - New-file (`add`) detection requires the directory watcher (fixed this
   session; file-list watching missed brand-new files).
@@ -158,8 +240,9 @@ runtime only on `/acrx/*`, privileged endpoints admin-gated.
   shape changes) and marks stale with a reason instead of reloading.
 - Authed admin E2E (dashboard swap, file-touch→swap) needs `E2E_STORAGE_STATE`;
   public protocol surface is covered without auth.
-- Seed content has no interactive-widget pages, so visitor target-patching
-  is proven via echo→register→fetch roundtrip rather than a seeded page.
+- Seed now creates `acroxajs-fixture` (published, tabs widget) so visitor
+  target-patching is proven on a real seeded page; previously the seed had
+  no interactive-widget pages and the echo roundtrip carried that proof.
 - Watcher/plumbing edits (`hot-reloader.js`, `index.js` boot closures) take
   effect on restart; feature-code edits (views/routes/layouts) hot-swap.
   Verified live: stale running instances silently ignore new watcher logic.

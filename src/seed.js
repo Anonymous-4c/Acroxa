@@ -75,7 +75,58 @@ async function seedWidgetsAndPatterns() {
       console.log('Created pattern:', p.name);
     }
   }
-  
+
+  // AcroxaJS fixture page (Phase 8): a real visitor page carrying an
+  // interactive widget so visitor target-patching/hydration is proven on a
+  // seeded page (not just the echo roundtrip). Skipped until setup has a
+  // user (author is required by the Page model).
+  try {
+    const existingFixture = await models.Page.findOne({ slug: "acroxajs-fixture" });
+    if (!existingFixture) {
+      const user = await models.User.findOne({});
+      if (user) {
+        await models.Page.create({
+          title: "AcroxaJS Runtime Fixture",
+          slug: "acroxajs-fixture",
+          status: "published",
+          template: "default",
+          showInMenu: false,
+          author: user._id,
+          content: {
+            json: {
+              blocks: [
+                {
+                  id: "fixture-heading",
+                  type: "heading",
+                  data: { level: 2 },
+                  content: [{ type: "text", text: "AcroxaJS Runtime Fixture" }],
+                },
+                {
+                  id: "fixture-tabs",
+                  type: "tabs",
+                  data: {
+                    tabs: [
+                      { label: "Overview", content: "<p>Interactive tabs widget rendered by AcroxaJS with deterministic identity.</p>" },
+                      { label: "Runtime", content: "<p>This widget is a live patch target carrying data-acrx-id and generation.</p>" },
+                    ],
+                  },
+                  content: [],
+                },
+              ],
+              blockOrder: ["fixture-heading", "fixture-tabs"],
+            },
+            html: "",
+            raw: "",
+            conditionalJS: null,
+          },
+        });
+        console.log('Created fixture page: acroxajs-fixture');
+      }
+    }
+  } catch (e) {
+    console.log("Fixture page seed skipped:", e.message);
+  }
+
   console.log('Seeding complete!');
 }
 

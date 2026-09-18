@@ -27,8 +27,6 @@ const metaPath = (id) => path.join(basePath(id), "meta.json");
 
 function readMeta(id) {
   const mp = metaPath(id);
-  console.log(metaPath)
-  console.log(basePath)
   if (!fs.existsSync(mp)) throw new Error("meta.json not found");
   return JSON.parse(fs.readFileSync(mp, "utf-8"));
 }

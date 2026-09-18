@@ -9,7 +9,10 @@ module.exports.meta = [
     path: "/acrx/users/create",
     render: "renderCreateUser",
     title: "Create User - Acroxa",
-    css: [],
+    css: [
+      "/acrx/assets/css/ad-st.css",
+      "/acrx/assets/css/ad-users.css"
+    ],
     js: [],
     layout: "full",
     // header/sidebar/footer inherited from "full" layout in the route loader

@@ -205,6 +205,19 @@ const getSchema = () => {
         environment:  { type: String,  enum: ["development", "staging", "production"], default: "production" },
       },
 
+      // ── ACROXAJS RUNTIME (Phase 9) ────────────────────────────────────────
+      // Flat per-field shape like every section. Every key affects runtime
+      // behavior (cache-layers.test.mjs); core contracts stay non-configurable.
+      runtime: {
+        cacheEnabled:    { type: Boolean, default: true },
+        cacheStrategy:   { type: String,  default: "cache-first" },
+        cacheTTL:        { type: Number,  default: 60000 },
+        cacheSwrGraceMs: { type: Number,  default: 30000 },
+        cacheMaxSize:    { type: Number,  default: 200 },
+        patchLog:        { type: Boolean, default: true },
+        inspector:       { type: Boolean, default: true },
+      },
+
       // ── EMAIL ──────────────────────────────────────────────────────────────
       email: {
         enabled:       { type: Boolean, default: false },

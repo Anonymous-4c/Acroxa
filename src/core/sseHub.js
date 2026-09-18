@@ -13,21 +13,47 @@ const clients = new Set();
 
 // ── MIDDLEWARE: establish SSE connection ──────────────────────────────────────
 
+const MAX_CLIENTS = 200;
+const EVENT_RE = /^[a-z0-9.:_-]+$/i;
+
 function sseHandler(req, res) {
+  if (clients.size >= MAX_CLIENTS) {
+    try { res.status(429).json({ success: false, message: "too many runtime listeners" }); } catch (_) {}
+    return;
+  }
   res.setHeader("Content-Type",  "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection",    "keep-alive");
   res.setHeader("X-Accel-Buffering", "no"); // Nginx: disable buffering
+  try { req.setTimeout(65000); } catch (_) {}
 
-  // Send initial heartbeat so client knows connection is open
-  res.write("event: connected\ndata: {}\n\n");
+  let rev = 0;
+  let bootId = null;
+  try {
+    const revision = require("./runtime/revision");
+    rev = revision.get();
+    bootId = revision.bootId();
+  } catch (_) {}
 
-  const client = { res, id: Date.now() + Math.random() };
+  // Named connected event carries rev so clients can resync immediately.
+  res.write(`event: connected\ndata: ${JSON.stringify({ rev, bootId, at: Date.now() })}\n\n`);
+
+  const client = { res, id: Date.now() + Math.random(), connectedAt: Date.now() };
   clients.add(client);
+  try { require("./runtime/debug").log("sse", `client connected (${clients.size} total) rev=${rev}`); } catch (_) {}
 
-  // Keep-alive ping every 25 s
+  // Visible heartbeat every 25 s (client resets its stale timer on ping).
   const ping = setInterval(() => {
-    try { res.write(": ping\n\n"); } catch (_) { _remove(client); }
+    try {
+      let r = 0;
+      let b = null;
+      try {
+        const revision = require("./runtime/revision");
+        r = revision.get();
+        b = revision.bootId();
+      } catch (_) {}
+      res.write(`event: ping\ndata: ${JSON.stringify({ rev: r, bootId: b, at: Date.now() })}\n\n`);
+    } catch (_) { _remove(client); }
   }, 25_000);
 
   req.on("close", () => {
@@ -39,9 +65,22 @@ function sseHandler(req, res) {
 // ── BROADCAST ─────────────────────────────────────────────────────────────────
 
 function broadcast(eventName, data = {}) {
-  if (!clients.size) return;
+  if (!clients.size) {
+    try { require("./runtime/debug").log("sse", `broadcast ${eventName} dropped (0 clients)`); } catch (_) {}
+    return;
+  }
+  if (typeof eventName !== "string" || !EVENT_RE.test(eventName) || eventName.length > 64) return;
+  try {
+    const dbg = require("./runtime/debug");
+    const extra = data && typeof data.v === "number" ? ` v${data.v}` : "";
+    const tg = Array.isArray(data && data.targets) ? ` ${(data.targets || []).length} target(s)` : "";
+    dbg.log("sse", `broadcast ${eventName}${extra}${tg} -> ${clients.size} client(s)`);
+  } catch (_) {}
 
-  const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+  let payload;
+  try {
+    payload = `event: ${eventName}\ndata: ${JSON.stringify(data).slice(0, 50000)}\n\n`;
+  } catch (_) { return; }
 
   for (const client of clients) {
     try {
@@ -59,7 +98,14 @@ function _remove(client) {
 // ── STATUS ────────────────────────────────────────────────────────────────────
 
 function status() {
-  return { connections: clients.size };
+  let rev = 0;
+  let bootId = null;
+  try {
+    const revision = require("./runtime/revision");
+    rev = revision.get();
+    bootId = revision.bootId();
+  } catch (_) {}
+  return { connections: clients.size, rev, bootId };
 }
 
 module.exports = { sseHandler, broadcast, status };

@@ -29,12 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? '/acr/api/approvals/all'
                     : `/acr/api/approvals/${currentFilter}`;
 
-            const res = await fetch(url, {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'Accept': 'application/json' }
-            });
-            const data = await res.json();
+            // Prefer shared API client (dedup + cache) when present; fall back to fetch.
+            let data;
+            if (window.AcroxaApi && typeof window.AcroxaApi.get === 'function') {
+                const out = await window.AcroxaApi.get(url, { ttlMs: 10000 });
+                if (!out.ok) throw new Error((out.data && out.data.message) || 'Failed to load');
+                data = out.data;
+            } else {
+                const res = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json' }
+                });
+                data = await res.json();
+            }
 
             if (data.success) {
                 allApprovals = data.approvals || [];
@@ -116,10 +124,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
+    // ====================== INCREMENTAL ROW PATCH ======================
+    // Update exactly one row in place (status + actions cells only) so search
+    // focus, scroll and unrelated rows stay untouched. Falls back to full
+    // render when the row is absent (e.g. filtered out).
+    function patchRowInPlace(approvalId, nextStatus) {
+        if (!tbody) return false;
+        const row = tbody.querySelector(`.ttc-pi[data-id="${CSS.escape(String(approvalId))}"]`);
+        if (!row) return false;
+        try {
+            const statusCell = row.querySelector('.status-post, .status');
+            if (statusCell) {
+                statusCell.setAttribute('data-', getStatusColor(nextStatus));
+                statusCell.textContent = getStatusText(nextStatus);
+            }
+            const actionsCell = row.querySelector('.actions-post, .actions');
+            if (actionsCell) {
+                actionsCell.innerHTML = '<span class="text-muted small">Processed</span>';
+            }
+            // Keep local store consistent without refetch.
+            const idx = allApprovals.findIndex(a => String(a.id || a._id) === String(approvalId));
+            if (idx !== -1) allApprovals[idx] = { ...allApprovals[idx], status: nextStatus };
+            updateStats(allApprovals);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
     // ====================== FILTER & SEARCH ======================
     function filterApprovals() {
         let filtered = allApprovals;
 
+        // Preserve search focus/selection across re-render (editor-grade UX).
+        const hadFocus = searchInput && document.activeElement === searchInput;
+        const selStart = hadFocus ? searchInput.selectionStart : null;
+        const selEnd = hadFocus ? searchInput.selectionEnd : null;
         const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
         if (term) {
@@ -130,6 +170,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderApprovals(filtered);
+
+        if (hadFocus && searchInput) {
+            try {
+                searchInput.focus({ preventScroll: true });
+                if (selStart !== null && typeof searchInput.setSelectionRange === 'function') {
+                    searchInput.setSelectionRange(selStart, selEnd);
+                }
+            } catch (_) {}
+        }
     }
 
     // ====================== UPDATE STATS ======================
@@ -175,12 +224,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
 
             if (data.success) {
-                showToast(isApprove ? '✅ Request Approved' : '❌ Request Rejected', 
+                showToast(isApprove ? '✅ Request Approved' : '❌ Request Rejected',
                           isApprove ? 'success' : 'error');
+
+                // Invalidate shared GET cache so next list load is fresh.
+                try { window.AcroxaApi && window.AcroxaApi.invalidate('/acr/api/approvals'); } catch (_) {}
 
                 if (isApprove && data.actionApi) {
                     await executeMediaAction(data.actionApi, data.fileName, data);
-                } else {
+                } else if (!patchRowInPlace(approvalId, isApprove ? 'approved' : 'rejected')) {
                     loadApprovals();
                 }
             } else {
@@ -215,6 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(e);
             showToast('File action failed', 'warning');
         } finally {
+            try { window.AcroxaApi && window.AcroxaApi.invalidate('/acr/api/approvals'); } catch (_) {}
+            // Incremental: media action implies approval completed; avoid full reload.
             loadApprovals();
         }
     }

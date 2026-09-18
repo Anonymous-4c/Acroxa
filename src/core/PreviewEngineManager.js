@@ -50,7 +50,7 @@ async function _evictOldest() {
       await entry.engine.cleanup();
     } catch (_) {}
     _engineCache.delete(oldestKey);
-    console.log(`[PreviewEngineManager] Evicted engine: ${oldestKey}`);
+    if (process.env.NODE_ENV !== "production") console.log(`[PreviewEngineManager] Evicted engine: ${oldestKey}`);
   }
 }
 
@@ -116,7 +116,7 @@ async function reload(acrx, layoutId, configOverrides = null) {
     }
   }
 
-  console.log(`[PreviewEngineManager] Reloaded: ${layoutId}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[PreviewEngineManager] Reloaded: ${layoutId}`);
 
   // Pre-warm a fresh engine
   if (acrx) {
@@ -133,7 +133,7 @@ async function clear(layoutId) {
       _engineCache.delete(key);
     }
   }
-  console.log(`[PreviewEngineManager] Cleared: ${layoutId}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[PreviewEngineManager] Cleared: ${layoutId}`);
 }
 
 // ── CLEAR ALL ─────────────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ async function clearAll() {
     try { await entry.engine.cleanup(); } catch (_) {}
   }
   _engineCache.clear();
-  console.log("[PreviewEngineManager] All engines cleared");
+  if (process.env.NODE_ENV !== "production") console.log("[PreviewEngineManager] All engines cleared");
 }
 
 // ── STATUS ────────────────────────────────────────────────────────────────────

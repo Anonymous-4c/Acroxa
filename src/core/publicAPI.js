@@ -132,7 +132,7 @@ function registerPublicRoute({ path, method = "get", handler, plugin = "core" } 
 }
 
 function clearLayoutRoutes(plugin) {
-  console.log(`[publicAPI] clearLayoutRoutes("${plugin}") — no-op in new arch`);
+  // No-op in new arch (routing owned by RouteResolver). Silent by design.
 }
 
 const publicRegistered = [];

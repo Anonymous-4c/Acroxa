@@ -180,6 +180,7 @@ module.exports.meta = [
       "/acrx/assets/css/ad-ap.css"
     ],
     "js": [
+      "/acrx/assets/js/api-client.js",
       "/acrx/assets/js/approvals.js"
     ],
     "layout": "full",

@@ -8,20 +8,34 @@ const { verifyAPIToken, requireRoles } = require("../middlewares/authMiddleware"
 const {
   getUsers,
   getUser,
+  getMe,
   createUser,
   updateUser,
   deleteUser,
   bulkUpdateUsers,
   forceLogout,
-  toggleStatus
+  toggleStatus,
+  getUserActivity,
+  getOnlineUsers,
+  getActivityStats
 } = require("../controllers/usersController.js");
 
 const adminOnly = [verifyAPIToken, requireRoles("admin")];
+const authOnly = [verifyAPIToken];
 
 // ── LIST + CREATE ───────────────────────────────
 
 router.get("/", adminOnly, getUsers);
 router.post("/", adminOnly, createUser);
+
+// ── CURRENT USER (me) ────────────────────────────
+router.get("/me", authOnly, getMe);
+
+// ── ACTIVITY ────────────────────────────────────
+
+router.get("/activity", adminOnly, getUserActivity);
+router.get("/online", adminOnly, getOnlineUsers);
+router.get("/activity-stats", adminOnly, getActivityStats);
 
 // ── BULK ────────────────────────────────────────
 
@@ -42,6 +56,6 @@ router.post("/:id/status", adminOnly, toggleStatus);
 
 const extendRouter = (fn) => fn(router);
 
-module.exports.extendRouter = extendRouter;
+router.extendRouter = extendRouter;
+router.PREFIX = "/users";
 module.exports = router;
-module.exports.PREFIX = "/users";

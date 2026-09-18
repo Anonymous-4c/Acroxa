@@ -1259,9 +1259,6 @@ p {
     padding: var(--space-6);
 }
 .button:hover, .button-pst:hover {
-    background-color: var(--color-primary-200);
-    transform: translateY(-2px);
-    border-color: var(--gray-700);
 }
 
 .icon {
@@ -1446,22 +1443,6 @@ input.inline-edit:focus {
     border-color: var(--accent);
     background-color: var(--color-primary-200);
 }
-
-.btn-act {
-    background-color: var(--color-primary-200);
-    border: 1px solid var(--gray-600);
-    border-radius: 6px;
-    padding: 6px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-act:hover {
-    background-color: var(--color-primary-400);
-    border-color: var(--gray-700);
-    transform: translateY(-2px);
-}
-
 .dull {
     color: var(--gray-900);
     font-size: 14px;
@@ -1486,7 +1467,7 @@ input.inline-edit:focus {
     }
 }
 
-.button, .btn, .button-pst, .pages {
+.button, .btn, .button-pst, .pages, .btn-act {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1502,9 +1483,8 @@ input.inline-edit:focus {
     box-shadow: none;
 }
 
-.button:hover, .button-pst:hover, .pages:hover {
-    background-color: var(--color-primary-200);
-    transform: translateY(-2px);
+.button:hover, .button-pst:hover, .pages:hover, .btn-act:hover {
+    background-color: var(--color-primary-300);
     border-color: var(--gray-700);
 }
 
@@ -1637,22 +1617,6 @@ input.inline-edit:focus {
     border-color: var(--accent);
     background-color: var(--color-primary-200);
 }
-
-.btn-act {
-    background-color: var(--color-primary-200);
-    border: 1px solid var(--gray-600);
-    border-radius: 6px;
-    padding: 6px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-act:hover {
-    background-color: var(--color-primary-400);
-    border-color: var(--gray-700);
-    transform: translateY(-2px);
-}
-
 .dull {
     color: var(--gray-900);
     font-size: 14px;
@@ -3256,5 +3220,3 @@ pre.hljs{
 .acroxa-ready .plugin-dropdown-btn.animate-in {
     transition-delay: 100ms !important;
 }
-
-

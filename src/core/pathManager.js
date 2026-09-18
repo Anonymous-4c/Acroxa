@@ -24,7 +24,7 @@ function generateFrontendPaths() {
   for (const [key, value] of Object.entries(routes)) {
     jsContent += `const ${key.toUpperCase()}_PATH = "${value}";\n`;
   }
-  jsContent += `\nexport { BASE_URL, API_BASE, ${Object.keys(routes)
+  jsContent += `\nmodule.exports = { BASE_URL, API_BASE, ${Object.keys(routes)
     .map(k => k.toUpperCase() + "_PATH")
     .join(", ")} };`;
 

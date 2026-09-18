@@ -142,8 +142,6 @@ async function getPostStats(type, Post, userId) {
   }
 
   try {
-    console.log(`[Stats Debug] Type: ${type}, userId: ${userId} (${typeof userId})`);
-
     if (type === "sequelize") {
       // Simple and reliable way
       const allPosts = await Post.findAll({
@@ -151,8 +149,6 @@ async function getPostStats(type, Post, userId) {
         attributes: ["status"],
         raw: true
       });
-
-      console.log(`[Sequelize] Found ${allPosts.length} posts for authorId=${userId}`);
 
       allPosts.forEach(p => {
         stats.total++;
@@ -179,11 +175,8 @@ async function getPostStats(type, Post, userId) {
 
       const query = { author: queryUserId };
 
-      console.log(`[Mongoose] Query:`, query);
-
       // First: get total count (simple way)
       const totalCount = await Post.countDocuments(query);
-      console.log(`[Mongoose] Total posts: ${totalCount}`);
 
       // Then group by status
       const aggregation = await Post.aggregate([
@@ -195,8 +188,6 @@ async function getPostStats(type, Post, userId) {
           }
         }
       ]);
-
-      console.log(`[Mongoose] Aggregation result:`, aggregation);
 
       let calculatedTotal = 0;
 
@@ -215,10 +206,7 @@ async function getPostStats(type, Post, userId) {
 
   } catch (err) {
     console.error("getPostStats ERROR:", err.message);
-    console.error(err.stack);   // ← This will show you the real problem
   }
-
-  console.log("[Final Stats]:", stats);
   return stats;
 }
 

@@ -549,6 +549,7 @@ async function initializeApp() {
       const fresh = require('./src/routes/pages');
       const r = _asPagesRouter(fresh);
       if (!r || typeof r.handle !== "function") throw new Error("rebuilt pages module exports no router");
+      try { require("./src/core/runtime/debug").log("rebuild", "pages router built, swapping"); } catch (_) {}
       currentPagesRouter = fresh; // atomic swap
       const pages = (fresh.getPages && fresh.getPages()) || [];
       const loadErrors = (fresh.getLoadErrors && fresh.getLoadErrors()) || [];
@@ -561,9 +562,11 @@ async function initializeApp() {
       if (process.env.NODE_ENV !== "production") {
         console.log(`[pages] Rebuilt admin router (${pages.length} pages${loadErrors.length ? `, ${loadErrors.length} view(s) skipped` : ""}).`);
       }
+      try { require("./src/core/runtime/debug").log("rebuild", `pages router swapped ok (${pages.length} routes)`); } catch (_) {}
       return { success: true, routes: pages.length, loadErrors, timestamp: new Date().toISOString() };
     } catch (err) {
       console.error('[pages] Rebuild failed — keeping previous router:', err.message);
+      try { require("./src/core/runtime/debug").log("rebuild", `pages router FAILED, kept previous: ${err.message}`); } catch (_) {}
       try { require("./src/core/runtime/registry").mark("route:core:admin-pages", "failed", { lastError: err.message }); } catch (_) {}
       return { success: false, error: err.message };
     }
@@ -684,7 +687,7 @@ async function startServer() {
   try {
     await initializeApp();
 
-    // 404 handler (must be last)
+    // 404 handler (must be last before error middleware)
     app.use((req, res) => {
       const reqPath = req.path.toLowerCase();
       if (global.currentLayoutEngine?.render404) {
@@ -693,6 +696,23 @@ async function startServer() {
         } catch (_) {}
       }
       res.status(404).send(`<!DOCTYPE html><html><head><title>404</title></head><body style="font-family:system-ui;text-align:center;padding:80px;"><h1>404</h1><p>Page not found.</p><a href="/">Home</a></body></html>`);
+    });
+
+    // Global error boundary: one bad extension/widget render must not crash
+    // the process or leak internals. Production responses are redacted;
+    // details go to the server log only.
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, next) => {
+      try {
+        console.error(`[error-boundary] ${req.method} ${req.path}:`, err && err.message);
+      } catch (_) {}
+      if (res.headersSent) return next(err);
+      const prod = process.env.NODE_ENV === "production";
+      const isApi = String(req.path || "").startsWith("/acr/api/");
+      if (isApi) {
+        return res.status(500).json({ success: false, message: prod ? "internal error" : String((err && err.message) || "internal error") });
+      }
+      return res.status(500).send(`<!DOCTYPE html><html><head><title>Error</title></head><body style="font-family:system-ui;text-align:center;padding:80px;"><h1>Something went wrong</h1><p>${prod ? "Please try again later." : String((err && err.message) || "Unknown error").replace(/</g, "&lt;")}</p><a href="/">Home</a></body></html>`);
     });
 
     serverInstance = app.listen(PORT, "0.0.0.0", () => {

@@ -143,20 +143,21 @@ div#editor-right-sidebar {
   padding: 10px;
   margin-top: 10px;
   transition: all 0.5s var(--ease-water) !important;
+  height: calc(100vh - 145px);
 }
 div#editor-right-sidebar {
   margin: 10px 10px 0 0;
 }
 div#editor-toolbar {
     display: flex;
-    gap: 10px;
+    gap: 5px;
     padding: 7px;
     width: 100%;
-    border: 1px solid var(--color-primary-300);
+    border: 1px solid var(--color-primary-200);
     border-radius: 30px;
     justify-content: space-between;
-    max-width: 580px;
-    margin: 0 auto;
+    max-width: 630px;
+    margin: 0px auto;
 }
 .toolbar-btn {
     padding: 8px;
@@ -522,11 +523,17 @@ div#editor-canvas {
     border: none;
     outline: none;
   }
-  [class^="block-"]:empty::before, .canvas-input:empty::before {
+  /* Placeholder visibility is owned by document state: editables carry an
+     explicit `is-empty` class (synced on input, blur and render) because
+     `:empty` lies when browsers leave `<br>` or empty wrappers behind. */
+  [class^="block-"].is-empty::before, .canvas-input.is-empty::before {
     content: attr(data-placeholder);
     pointer-events: none;
     color: var(--muted);
     position: absolute;
+    left: 0px;
+  }
+  .canvas-input.is-empty::before {
     left: 20px;
   }
   [type="paragraph"][class^="block-"] {
@@ -1004,20 +1011,9 @@ div#editor-patterns-panel.collapsed {
   pointer-events: all;
 }
 
-/* Empty states */
-.block-wrap.empty {
-  opacity: 0.5;
-}
-.block-wrap.empty::before {
-  content: " drag blocks here ";
-  color: var(--muted);
-  pointer-events: none;
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-style: italic;
-}
+/* Empty containers render an in-flow `.container-empty-hint` from render
+   state (rendering.js) — never an absolutely-positioned overlay, so the
+   hint can never sit on top of real content. */
 
 /* Toolbar buttons with dropdown */
 .toolbar-btn.with-dropdown {
@@ -1067,3 +1063,8 @@ div#editor-patterns-panel.collapsed {
   visibility: visible;
   pointer-events: all;
 }
+.footer-center, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}.block-child[contenteditable="true"].is-empty::before { position: absolute; content: attr(data-placeholder); color: var(--muted); opacity: 0.7; }

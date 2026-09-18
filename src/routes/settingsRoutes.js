@@ -51,6 +51,9 @@ router.post("/email/send-test", adminOnly, sendTestEmail);
 // POST  /acr/api/system/cache/flush
 router.post("/cache/flush", adminOnly, flushCache);
 
+// GET   /acr/api/system/runtime → live runtime diagnostics (admin only)
+router.get("/runtime", adminOnly, require("../controllers/runtimeController").getSnapshot);
+
 // ── Generic section routes ────────────────────────────────────────────────────
 // SSE live stream
 router.get(
@@ -114,6 +117,22 @@ router.get(
         );
     }
 );
+
+// Paginated history (newest first) for the runtime panel.
+// GET /acr/api/system/logs/history?limit=200&offset=0&type=warn&type=error
+router.get(
+    "/logs/history",
+    adminOnly,
+    (req, res) => {
+        const q = req.query || {};
+        const types = q.type === undefined ? null : (Array.isArray(q.type) ? q.type : [q.type]);
+        res.setHeader("Cache-Control", "no-store");
+        res.json(Object.assign(
+            { success: true },
+            logStream.readHistory({ limit: q.limit, offset: q.offset, types })
+        ));
+    }
+);
 // GET   /acr/api/system           → full settings object
 router.get("/", adminOnly, getSettings);
 
@@ -128,7 +147,6 @@ router.patch("/:section", adminOnly, updateSection);
 
 // ── Extension hook ────────────────────────────────────────────────────────────
 const extendRouter = (fn) => fn(router);
-module.exports.extendRouter = extendRouter;
-
+router.extendRouter = extendRouter;
+router.PREFIX = PREFIX;
 module.exports = router;
-module.exports.PREFIX = PREFIX;

@@ -3,7 +3,15 @@
 // Reusable Media Picker popup for Acroxa admin.
 // Uses framework.js primitives only. No third-party libs, no build step.
 
-import { el, icon, Input, escapeHTML } from '../framework.js';
+// framework.js ships as a classic script (window.AcroxaFramework) and has no
+// ESM named exports, so a static `import { el } from '../framework.js'`
+// fails at module link time. Bind from the global instead — module scripts
+// are deferred, so the classic framework.js in <head> has always executed
+// first on admin pages (including the editor's empty layout via renderHead).
+const { el, icon, escapeHTML } = window.AcroxaFramework || {};
+if (typeof el !== 'function' || typeof icon !== 'function' || typeof escapeHTML !== 'function') {
+  throw new Error('[mediaPicker] window.AcroxaFramework is missing — ensure /acrx/assets/js/framework.js loads before this module.');
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Category / MIME helpers
@@ -326,45 +334,29 @@ class MediaPickerInstance {
     this.state.uploading = true;
     this._renderToolbar();
 
+    // Talk the same protocol the server expects per upload strategy
+    // (mirrors media.js): stream = raw body + x-file-name, chunk =
+    // sequential slices with chunk fields, otherwise multipart normal.
+    // Sending multipart while advertising stream/chunk used to 400 with
+    // "Missing name" / "Missing chunk data".
+    const cfg = this.state.uploadConfig;
+    const strategy = String(cfg?.uploadStrategy || "auto").toLowerCase();
+
     try {
-      const formData = new FormData();
-      valid.forEach((f) => {
-        // Explicitly pass the filename as the 3rd arg. Files picked via
-        // <input> resolve f.name automatically, but dropped files (drag &
-        // drop) don't always carry a reliable name through FormData without
-        // this being explicit — some drag sources hand over Blob-like
-        // objects with an empty/garbled name, which the backend needs a
-        // real filename for (see _applyNaming / getAvailableFilename).
-        const filename = f.name && f.name.trim() ? f.name : `upload_${Date.now()}`;
-        formData.append('media', f, filename);
-      });
-
-      const cfg = this.state.uploadConfig;
-      const headers = {};
-      if (cfg?.mediaNaming) headers['x-media-naming'] = cfg.mediaNaming;
-      if (cfg?.uploadStrategy) headers['x-upload-type'] = cfg.uploadStrategy;
-
-      const url = new URL(this.options.endpoints.upload, window.location.origin);
-      if (cfg?.uploadStrategy) url.searchParams.set('uploadtype', cfg.uploadStrategy);
-
-      const res = await fetch(url.toString(), {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-
-      if (!res.ok) {
-        this._flash(`Upload failed (${res.status}).`);
-        return;
+      let data;
+      if (strategy === "stream") {
+        data = await this._uploadStream(valid, cfg);
+      } else if (strategy === "chunk") {
+        data = await this._uploadChunked(valid, cfg);
+      } else {
+        data = await this._uploadMultipart(valid, cfg);
       }
-
-      const data = await res.json();
 
       if (!data?.success) {
-        this._flash(data?.message || 'Upload failed.');
+        this._flash(data?.message || "Upload failed.");
       }
     } catch (err) {
-      this._flash('Upload failed. Check your connection.');
+      this._flash("Upload failed. Check your connection.");
     } finally {
       // Always reset uploading state and re-enable the button, whether the
       // upload succeeded, failed, or threw — this must never stay stuck.
@@ -372,6 +364,109 @@ class MediaPickerInstance {
       this._renderToolbar();
       await this._loadMedia();
     }
+  }
+
+  _uploadHeaders(cfg, extra = {}) {
+    const headers = { ...extra };
+    if (cfg?.mediaNaming) headers["x-media-naming"] = cfg.mediaNaming;
+    return headers;
+  }
+
+  _uploadUrl(strategy) {
+    const url = new URL(this.options.endpoints.upload, window.location.origin);
+    url.searchParams.set("uploadtype", strategy);
+    return url.toString();
+  }
+
+  // Multipart upload. Always advertises "normal" so the server never
+  // auto-switches a big multipart body into stream mode (which needs
+  // x-file-name and would 400). Multer accepts up to its 500MB limit.
+  async _uploadMultipart(valid, cfg) {
+    const formData = new FormData();
+    valid.forEach((f) => {
+      // Explicitly pass the filename as the 3rd arg. Files picked via
+      // <input> resolve f.name automatically, but dropped files (drag &
+      // drop) don't always carry a reliable name through FormData without
+      // this being explicit — some drag sources hand over Blob-like
+      // objects with an empty/garbled name, which the backend needs a
+      // real filename for (see _applyNaming / getAvailableFilename).
+      const filename = f.name && f.name.trim() ? f.name : `upload_${Date.now()}`;
+      formData.append("media", f, filename);
+    });
+
+    const headers = this._uploadHeaders(cfg);
+    if (cfg?.uploadStrategy) headers["x-upload-type"] = "normal";
+
+    const res = await fetch(this._uploadUrl("normal"), {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      this._flash(`Upload failed (${res.status}).`);
+      return null;
+    }
+
+    return await res.json();
+  }
+
+  // Raw-body stream upload, one request per file (mirrors media.js).
+  async _uploadStream(valid, cfg) {
+    let last = null;
+    for (const f of valid) {
+      const filename = f.name && f.name.trim() ? f.name : `upload_${Date.now()}`;
+      const headers = this._uploadHeaders(cfg, {
+        "Content-Type": "application/octet-stream",
+        "x-file-name": encodeURIComponent(filename),
+        "x-upload-type": "stream",
+      });
+      const res = await fetch(this._uploadUrl("stream"), {
+        method: "POST",
+        headers,
+        body: f,
+      });
+      if (!res.ok) {
+        this._flash(`Upload failed (${res.status}).`);
+        return null;
+      }
+      last = await res.json();
+      if (!last?.success) return last;
+    }
+    return last || { success: true };
+  }
+
+  // Sequential chunked upload (mirrors the server chunk protocol:
+  // fileId/chunkIndex/totalChunks/fileName fields + one "media" file).
+  async _uploadChunked(valid, cfg) {
+    const CHUNK_SIZE = 5 * 1024 * 1024;
+    let last = null;
+    for (const f of valid) {
+      const filename = f.name && f.name.trim() ? f.name : `upload_${Date.now()}`;
+      const fileId = (crypto?.randomUUID ? crypto.randomUUID() : `up_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+      const totalChunks = Math.max(1, Math.ceil(f.size / CHUNK_SIZE) || 1);
+      for (let i = 0; i < totalChunks; i++) {
+        const formData = new FormData();
+        formData.append("fileId", fileId);
+        formData.append("chunkIndex", String(i));
+        formData.append("totalChunks", String(totalChunks));
+        formData.append("fileName", filename);
+        formData.append("media", f.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE), filename);
+        const headers = this._uploadHeaders(cfg, { "x-upload-type": "chunk" });
+        const res = await fetch(this._uploadUrl("chunk"), {
+          method: "POST",
+          headers,
+          body: formData,
+        });
+        if (!res.ok) {
+          this._flash(`Upload failed (${res.status}).`);
+          return null;
+        }
+        last = await res.json();
+        if (!last?.success) return last;
+      }
+    }
+    return last || { success: true };
   }
 
   // ── Rename ──────────────────────────────────────────────────────────
@@ -800,7 +895,10 @@ class MediaPickerInstance {
     if (selected) classes.push('mp-item-selected');
     if (focused) classes.push('mp-item-focused');
 
-    return el('div', {
+    // Keyed via el.h so grid rows carry stable data-acrx-id identity for
+    // targeted patching/hydration instead of full-grid innerHTML swaps.
+    return el.h('div', {
+      key: 'mp-item-' + (file.id ?? file.name ?? index),
       class: classes.join(' '),
       dataName: file.name,
       dataIndex: index,

@@ -1,5 +1,5 @@
 /* ============================================================
-   viewUser.css — Acroxa User Detail Page
+   viewUser.css — User Profile Preview (Bento Grid)
    ============================================================ */
 
 .vu-error {
@@ -12,13 +12,26 @@
   color: var(--text-muted);
   text-align: center;
 }
-
 .vu-error i { font-size: 2.5rem; opacity: .3; }
 .vu-error p { font-size: .95rem; margin: 0; }
 
-/* ── Profile Card ──────────────────────────────────────────────────────────── */
+/* ── Bento Grid ─────────────────────────────────────────────── */
 
-.vu-profile-card {
+.vu-bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: var(--space-4, 1rem);
+}
+
+.vu-bento-profile  { grid-column: 1 / -1; }
+.vu-bento-live     { grid-column: 1; }
+.vu-bento-rings    { grid-column: 2; }
+
+/* ── Profile Card ────────────────────────────────────────────── */
+
+.vu-profile-card,
+.vu-bento-profile {
   background: var(--color-primary-200);
   border: 1px solid var(--color-primary-300);
   border-radius: var(--radius-lg, 16px);
@@ -37,18 +50,23 @@
 }
 
 .vu-avatar {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: var(--color-primary-300);
   color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   overflow: hidden;
   border: 3px solid var(--color-primary-200);
+  transition: transform .2s ease;
+}
+
+.vu-avatar:hover {
+  transform: scale(1.05);
 }
 
 .vu-avatar img {
@@ -61,15 +79,16 @@
   position: absolute;
   bottom: 2px;
   right: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 3px solid var(--color-primary-200);
+  transition: background .3s ease;
 }
 
 .vu-status-dot--active   { background: var(--color-success); }
 .vu-status-dot--suspended { background: var(--color-warning); }
-.vu-status-dot--inactive  { background: var(--color-neutral); }
+.vu-status-dot--inactive  { background: #6b7280; }
 
 .vu-profile-info {
   flex: 1;
@@ -85,9 +104,19 @@
 
 .vu-profile-name h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-color);
+}
+
+.u-self-badge {
+  display: inline-block;
+  padding: .1rem .4rem;
+  border-radius: var(--radius-sm, 5px);
+  font-size: .65rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
 }
 
 .vu-profile-meta {
@@ -120,25 +149,7 @@
 
 .vu-status-pill--active   { background: var(--color-success-bg); color: var(--color-success); }
 .vu-status-pill--suspended { background: var(--color-warning-bg); color: var(--color-warning); }
-.vu-status-pill--inactive  { background: var(--color-neutral-bg); color: var(--color-neutral); }
-
-.vu-sv-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: .15rem .45rem;
-  font-size: .65rem;
-  font-family: monospace;
-  font-weight: 600;
-  border-radius: 4px;
-  background: var(--color-primary-300);
-  color: var(--text-muted);
-}
-
-.vu-sv-bumped {
-  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
-}
+.vu-status-pill--inactive  { background: var(--color-neutral-bg, #f3f4f6); color: #6b7280; }
 
 .vu-profile-email {
   margin: 0;
@@ -146,15 +157,126 @@
   color: var(--text-muted);
 }
 
-/* ── Grid ──────────────────────────────────────────────────────────────────── */
-
-.vu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--space-4, 1rem);
+.vu-profile-footer {
+  display: flex;
+  gap: .75rem;
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--color-primary-300);
 }
 
+.vu-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .25rem .6rem;
+  border-radius: var(--radius-sm, 5px);
+  font-size: .72rem;
+  color: var(--text-muted);
+  background: var(--color-primary-300);
+}
+
+/* ── Live Status Card ────────────────────────────────────────── */
+
+.vu-bento-live {
+  background: var(--color-primary-200);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.vu-live-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.vu-live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+  transition: background .3s ease;
+}
+
+.vu-live-dot--on {
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
+  animation: vu-pulse 2s ease-in-out infinite;
+}
+
+@keyframes vu-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--color-success); }
+  50% { opacity: .6; box-shadow: 0 0 14px var(--color-success); }
+}
+
+.vu-live-title {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.vu-live-details {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+
+/* ── SVG Rings ────────────────────────────────────────────────── */
+
+.vu-bento-rings {
+  background: var(--color-primary-200);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.vu-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .15rem;
+  position: relative;
+}
+
+.vu-ring svg {
+  transform: rotate(0);
+}
+
+.vu-ring-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.vu-ring-sub {
+  font-size: .6rem;
+  color: var(--text-muted);
+}
+
+.vu-ring-label {
+  font-size: .65rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Info Sections ───────────────────────────────────────────── */
+
 .vu-section {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: .5rem;
@@ -162,7 +284,7 @@
 
 .vu-section-title {
   margin: 0;
-  font-size: .8rem;
+  font-size: .78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
@@ -191,7 +313,7 @@
 
 .vu-info-label {
   color: var(--text-muted);
-  min-width: 110px;
+  min-width: 120px;
   flex-shrink: 0;
   font-size: .78rem;
 }
@@ -206,12 +328,125 @@
   font-size: .72rem;
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
+/* ── Pages Chips ──────────────────────────────────────────────── */
 
-@media (max-width: 640px) {
-  .vu-profile-header { flex-direction: column; align-items: center; text-align: center; }
+.vu-pages-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.vu-page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .25rem .6rem;
+  border-radius: var(--radius-sm, 5px);
+  font-size: .72rem;
+  font-family: monospace;
+  background: var(--color-primary-300);
+  color: var(--text-color);
+  transition: background .15s ease;
+}
+
+.vu-page-chip:hover {
+  background: var(--color-primary-200);
+}
+
+/* ── Activity Timeline ────────────────────────────────────────── */
+
+.vu-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.vu-timeline-item {
+  display: flex;
+  gap: .75rem;
+  padding: .5rem 0;
+  border-left: 2px solid var(--color-primary-300);
+  margin-left: .4rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.vu-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: .75rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary-300);
+}
+
+.vu-timeline-item:first-child::before {
+  background: var(--accent);
+}
+
+.vu-timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.vu-timeline-page {
+  font-size: .8rem;
+  font-family: monospace;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vu-timeline-meta {
+  display: flex;
+  gap: .5rem;
+  font-size: .7rem;
+  color: var(--text-muted);
+  margin-top: .1rem;
+}
+
+.vu-timeline-dur {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .vu-bento {
+    grid-template-columns: 1fr;
+  }
+  .vu-bento-live,
+  .vu-bento-rings {
+    grid-column: 1;
+  }
+  .vu-bento-rings {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: .5rem;
+  }
+  .vu-profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
   .vu-profile-meta { justify-content: center; }
-  .vu-grid { grid-template-columns: 1fr; }
+  .vu-profile-footer { justify-content: center; flex-wrap: wrap; }
   .vu-info-row { flex-direction: column; gap: .15rem; }
   .vu-info-label { min-width: 0; }
+}
+
+@media (max-width: 480px) {
+  .vu-bento-rings {
+    justify-content: space-around;
+  }
+  .vu-ring svg {
+    width: 56px !important;
+    height: 56px !important;
+  }
 }

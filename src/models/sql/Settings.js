@@ -8,6 +8,7 @@ const JSON_SECTIONS = [
   "homepage", "blogPage", "routing",
   "seo", "analytics", "ai", "advanced", "backupPolicy",
   "email", "appearance",
+  "runtime",
 ];
 
 const buildModel = (sequelize) => {
@@ -151,6 +152,18 @@ const buildModel = (sequelize) => {
         defaultValue: {
           debugMode: false, logLevel: "info", cacheEnabled: true,
           cacheTTL: 3600, cdnURL: "", environment: "production",
+        },
+      },
+
+      // AcroxaJS runtime (Phase 9) — flat shape like every section.
+      // Every key affects runtime behavior (cache-layers.test.mjs);
+      // core identity/protocol/boot paths stay non-configurable.
+      runtime: {
+        type: DataTypes.JSON,
+        defaultValue: {
+          cacheEnabled: true, cacheStrategy: "cache-first", cacheTTL: 60000,
+          cacheSwrGraceMs: 30000, cacheMaxSize: 200,
+          patchLog: true, inspector: true,
         },
       },
 

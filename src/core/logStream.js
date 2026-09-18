@@ -43,6 +43,18 @@ function addLog(type, args) {
     }
 }
 
+// Quiet channel: writes to the Logs UI (history + live SSE) but never to the
+// terminal. For routine informational noise (model loads, route mounts,
+// page rebuilds) that belongs on /acrx/system/logs, not the dev console.
+// Errors should use console.error so they reach BOTH terminal and Logs UI.
+function quiet(type, ...args) {
+    addLog(type || "info", args);
+}
+
+// Terminal suppression for third-party noise (mongoose warnings etc.) is
+// deliberately NOT done by overriding console.warn globally; call sites use
+// quiet() instead so the Logs page stays the single source of truth.
+
 function patchConsole() {
 
     console.log = (...args) => {
@@ -95,11 +107,28 @@ function createStream(req, res) {
     });
 }
 
+// Paginated JSON read of the ring buffer (newest first). Bounded and
+// copy-safe: never exposes the live array, never more than MAX_LOGS.
+function readHistory({ limit = 200, offset = 0, types = null } = {}) {
+    const n = Math.max(1, Math.min(parseInt(limit, 10) || 200, MAX_LOGS));
+    const off = Math.max(0, parseInt(offset, 10) || 0);
+    const wanted = Array.isArray(types) && types.length ? new Set(types.map(String)) : null;
+    const out = [];
+    for (let i = history.length - 1 - off; i >= 0 && out.length < n; i--) {
+        const e = history[i];
+        if (wanted && !wanted.has(e.type)) continue;
+        out.push({ type: e.type, timestamp: e.timestamp, message: [...e.message] });
+    }
+    return { entries: out, total: history.length };
+}
+
 module.exports = {
     patchConsole,
     createStream,
     history,
     clients,
+    readHistory,
+    quiet,
 
     enable() {
         streamingEnabled = true;

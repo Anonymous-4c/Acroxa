@@ -5,6 +5,11 @@
 // the template needs. Layout designers never touch DB code.
 
 const { getConnection } = require("../../core/connect-db");
+const {
+  renderDocument,
+  extractTextFromDocument,
+  responsiveCSSForDocument,
+} = require("./widgetRenderer.js");
 
 function getModels() {
   const conn = getConnection();
@@ -68,6 +73,49 @@ class DataLoader {
       return null;
     }
   }
+  // ── EDITOR CONTENT DERIVATION ──────────────────────────────────────────
+  // The client saves { json, html, raw }, but older docs (or partial saves)
+  // may lack the derived fields. The blueprint json is source of truth: the
+  // server re-derives html/raw/responsive CSS through the same widgetRenderer
+  // the save path uses, so templates never see a blank page for missing html.
+  _parseEditorJson(content) {
+    try {
+      const raw = content?.json;
+      if (!raw) return null;
+      return typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  _deriveContent(doc) {
+    const content = doc?.content || {};
+    const json = this._parseEditorJson(content);
+    let html = content.html || "";
+    let raw = content.raw || "";
+    if ((!html || !raw) && json) {
+      try {
+        if (!html) html = renderDocument(json) || "";
+      } catch (e) {
+        console.warn("DataLoader: server html derivation failed:", e.message);
+      }
+      try {
+        if (!raw) raw = extractTextFromDocument(json) || "";
+      } catch (e) {
+        console.warn("DataLoader: server raw derivation failed:", e.message);
+      }
+    }
+    let responsiveCss = "";
+    if (json) {
+      try {
+        responsiveCss = responsiveCSSForDocument(json) || "";
+      } catch (e) {
+        console.warn("DataLoader: responsive CSS collection failed:", e.message);
+      }
+    }
+    return { json, html, raw, responsiveCss };
+  }
+
   // ── MASTER ENTRY POINT ────────────────────────────────────────────────────
   // Called by LayoutEngine.handle() with the resolved route object.
   async loadResolvedData(resolved) {
@@ -164,22 +212,27 @@ async getBaseParams() {
     const post = await this.getPostBySlug(slug);
     if (!post) return null; // LayoutEngine will handle 404
 
-    // Parse JSON content from editor
-    let jsonContent = null;
-    try {
-      const raw = post.content?.json;
-      jsonContent = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch (e) {
-      jsonContent = null;
-    }
+    const formatted = this.formatPostForTemplate(post);
+    const derived = this._deriveContent(post);
 
     return {
       page_title: post.title,
-      post:       this.formatPostForTemplate(post),
+      // Template-level keys (what post/page templates actually read).
+      title:      post.title,
+      content:    derived.html,
+      meta: {
+        author:   formatted.author,
+        date:     formatted.date,
+        readTime: `${formatted.read_time} min read`,
+        excerpt:  formatted.excerpt,
+        image:    formatted.image,
+      },
+      post:       formatted,
       // Editor-specific data
-      editorContent: jsonContent,
-      contentHtml:   post.content?.html || "",
-      contentRaw:    post.content?.raw || "",
+      editorContent:       derived.json,
+      contentHtml:         derived.html,
+      contentRaw:          derived.raw,
+      editorResponsiveCss: derived.responsiveCss,
       seo: {
         metaTitle:       post.metaTitle,
         metaDescription: post.metaDescription,
@@ -199,22 +252,24 @@ async getBaseParams() {
     const page = await this.getPageBySlug(slug);
     if (!page) return null; // LayoutEngine will handle 404
 
-    // Parse JSON content from editor
-    let jsonContent = null;
-    try {
-      const raw = page.content?.json;
-      jsonContent = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch (e) {
-      jsonContent = null;
-    }
+    const formatted = this.formatPageForTemplate(page);
+    const derived = this._deriveContent(page);
 
     return {
       page_title: page.title,
-      page:       this.formatPageForTemplate(page),
+      // Template-level keys (what post/page templates actually read).
+      title:      page.title,
+      content:    derived.html,
+      meta: {
+        date:     formatted.date,
+        image:    formatted.image,
+      },
+      page:       formatted,
       // Editor-specific data
-      editorContent: jsonContent,
-      contentHtml:   page.content?.html || "",
-      contentRaw:    page.content?.raw || "",
+      editorContent:       derived.json,
+      contentHtml:         derived.html,
+      contentRaw:          derived.raw,
+      editorResponsiveCss: derived.responsiveCss,
     };
   }
 
@@ -440,24 +495,22 @@ async getBaseParams() {
   formatPostForTemplate(post) {
     if (!post) return null;
 
-    // Parse JSON content from editor
-    let jsonContent = null;
-    try {
-      const raw = post.content?.json;
-      jsonContent = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch (e) {
-      jsonContent = null;
-    }
+    const derived = this._deriveContent(post);
+    // Read time counts real words (raw), never HTML tags — the old version
+    // counted markup as words and inflated every estimate.
+    const readTime = derived.raw
+      ? Math.max(1, Math.ceil(derived.raw.split(/\s+/).filter(Boolean).length / 200))
+      : 1;
 
     return {
       id:        post.id || post._id,
       title:     post.title,
       slug:      post.slug,
       excerpt:   post.excerpt || "",
-      content:   post.content?.html || post.content || "",
+      content:   derived.html || post.content || "",
       // Editor JSON content (source of truth)
-      editorJson: jsonContent,
-      contentRaw: post.content?.raw || "",
+      editorJson: derived.json,
+      contentRaw: derived.raw,
       image:     post.featuredImage || "",
       date:      this.formatDate(post.publishDate),
       category:  post.categories?.[0]?.name || "Uncategorized",
@@ -465,7 +518,7 @@ async getBaseParams() {
         ? post.categories.map(c => ({ name: c.name, slug: c.slug, color: c.color }))
         : [],
       author:    post.author?.username || "Admin",
-      read_time: this.calculateReadTime(post.content?.html || post.content || ""),
+      read_time: readTime,
       url:       `/post/${post.slug}`,
     };
   }
@@ -473,24 +526,18 @@ async getBaseParams() {
   formatPageForTemplate(page) {
     if (!page) return null;
 
-    // Parse JSON content from editor
-    let jsonContent = null;
-    try {
-      const raw = page.content?.json;
-      jsonContent = typeof raw === "string" ? JSON.parse(raw) : raw;
-    } catch (e) {
-      jsonContent = null;
-    }
+    const derived = this._deriveContent(page);
 
     return {
       id:         page.id || page._id,
       title:      page.title,
       slug:       page.slug,
-      content:    page.content?.html || page.content?.raw || page.content || "",
+      content:    derived.html || page.content?.raw || page.content || "",
       // Editor JSON content (source of truth)
-      editorJson: jsonContent,
-      contentRaw: page.content?.raw || "",
+      editorJson: derived.json,
+      contentRaw: derived.raw,
       image:      page.featuredImage || "",
+      date:       this.formatDate(page.publishDate || page.createdAt),
       template:   page.template || "default",
       customCSS:  page.customCSS || "",
     };

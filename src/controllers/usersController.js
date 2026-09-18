@@ -2,6 +2,7 @@
 
 const EventEmitter = require("events");
 const userEvents = new EventEmitter();
+const { instance: activityCache } = require("../core/activityCache");
 
 // ── DB Access ─────────────────────────────────────────────
 
@@ -132,6 +133,87 @@ const getUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch user"
+    });
+  }
+};
+
+// GET CURRENT USER (ME)
+const getMe = async (req, res) => {
+  try {
+    const models = await getModels();
+    const userId = req.user?.id || req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authenticated"
+      });
+    }
+
+    const user = await models.User.findById(userId)
+      .select('-password -__v -resetPasswordToken -resetPasswordExpires -emailVerificationCode -controlKey -passkeys -recoverySecretHash')
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Get stats
+    let stats = { posts: {}, pages: 0, categories: 0 };
+    let recentPosts = [];
+    let recentPages = [];
+
+    if (models.Post) {
+      const Post = models.Post;
+      const [total, published, draft, scheduled, archived, trashed, recent] = await Promise.all([
+        Post.countDocuments({ author: user._id }),
+        Post.countDocuments({ author: user._id, status: 'published' }),
+        Post.countDocuments({ author: user._id, status: 'draft' }),
+        Post.countDocuments({ author: user._id, status: 'scheduled' }),
+        Post.countDocuments({ author: user._id, status: 'archived' }),
+        Post.countDocuments({ author: user._id, status: 'trashed' }),
+        Post.find({ author: user._id }).sort({ createdAt: -1 }).limit(5).select('title slug status views likes date').lean()
+      ]);
+      stats.posts = { total, published, draft, scheduled: 0, archived: 0, trashed };
+      recentPosts = recent;
+    }
+
+    if (models.Page) {
+      const Page = models.Page;
+      const [pagesCount, recentPagesData] = await Promise.all([
+        Page.countDocuments({ author: user._id }),
+        Page.find({ author: user._id }).sort({ createdAt: -1 }).limit(5).select('title slug status template date').lean()
+      ]);
+      stats.pages = pagesCount;
+      recentPages = recentPagesData;
+    }
+
+    if (models.Category) {
+      stats.categories = await models.Category.countDocuments({ author: user._id });
+    }
+
+    const userData = {
+      ...user,
+      id: user._id?.toString() || user.id
+    };
+
+    return res.json({
+      success: true,
+      message: `Profile fetched for user: ${user.username}`,
+      user: userData,
+      stats,
+      recentPosts,
+      recentPages
+    });
+
+  } catch (err) {
+    console.error("[Users] getMe:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch profile"
     });
   }
 };
@@ -339,16 +421,93 @@ const toggleStatus = async (req, res) => {
   }
 };
 
+// GET ACTIVITY DATA FOR USERS — reads from ActivityCache (SSE live data)
+const getUserActivity = async (req, res) => {
+  try {
+    const { ids } = req.query;
+
+    let data = [];
+    if (ids) {
+      const idList = ids.split(",").filter(Boolean);
+      const cached = activityCache.getMany(idList);
+      data = idList.map(id => cached[id] || null).filter(Boolean);
+    } else {
+      data = Array.from(activityCache.getAll().values());
+    }
+
+    const normalized = data.map(a => ({
+      userId: a.userId,
+      username: a.username,
+      avatar: a.avatar || "",
+      role: a.role || "user",
+      activePage: a.activePage,
+      isActive: a.isActive !== false,
+      lastSeen: a.lastSeen,
+      ip: a.ip,
+      sessionId: a.sessionId,
+      totalVisits: a.totalVisits || 0,
+      todayVisits: a.todayVisits || 0,
+      actionsToday: a.actionsToday || 0,
+      pagesViewedToday: a.pagesViewedToday || 0,
+      totalTimeOnline: a.totalTimeOnline || 0,
+      pagesVisited: a.pagesVisited || []
+    }));
+
+    return res.json({ success: true, data: normalized });
+
+  } catch (err) {
+    console.error("[Users] getUserActivity:", err);
+    return res.status(500).json({ success: false, message: "Failed to fetch activity data" });
+  }
+};
+
+// GET ONLINE USERS — reads from ActivityCache (SSE live data)
+const getOnlineUsers = async (req, res) => {
+  try {
+    const users = activityCache.getOnline(5 * 60 * 1000);
+    const normalized = users.map(u => ({
+      userId: u.userId,
+      username: u.username,
+      avatar: u.avatar || "",
+      role: u.role || "user",
+      activePage: u.activePage,
+      lastSeen: u.lastSeen,
+      ip: u.ip,
+      todayVisits: u.todayVisits || 0,
+      actionsToday: u.actionsToday || 0
+    }));
+    return res.json({ success: true, data: normalized });
+  } catch (err) {
+    console.error("[Users] getOnlineUsers:", err);
+    return res.status(500).json({ success: false, message: "Failed to fetch online users" });
+  }
+};
+
+// GET ACTIVITY STATS — reads from ActivityCache (SSE live data)
+const getActivityStats = async (req, res) => {
+  try {
+    const stats = activityCache.getStats();
+    return res.json({ success: true, data: stats });
+  } catch (err) {
+    console.error("[Users] getActivityStats:", err);
+    return res.status(500).json({ success: false, message: "Failed to fetch stats" });
+  }
+};
+
 // ── EXPORTS ───────────────────────────────────────────────
 
 module.exports = {
   userEvents,
   getUsers,
   getUser,
+  getMe,
   createUser,
   updateUser,
   deleteUser,
   bulkUpdateUsers,
   forceLogout,
-  toggleStatus
+  toggleStatus,
+  getUserActivity,
+  getOnlineUsers,
+  getActivityStats
 };

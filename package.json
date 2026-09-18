@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "test:engines": "node --test --test-force-exit \"acrx/assets/js/editor/engines/__tests__/*.test.mjs\" \"acrx/assets/js/editor/app/__tests__/*.test.mjs\"",
+    "test:runtime": "node --test --test-force-exit \"src/core/runtime/__tests__/*.test.mjs\"",
+    "test:acroxajs": "node --test --test-force-exit \"src/AcroxaJS/tests/*.test.mjs\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1029.0",
@@ -17,12 +20,14 @@
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "chokidar": "^5.0.0",
+    "connect-livereload": "^0.6.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.2",
+    "livereload": "^0.10.3",
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",
     "music-metadata": "^11.13.0",
@@ -32,10 +37,15 @@
     "passport-local": "^1.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "sequelize": "^6.37.8",
+    "sharp": "^0.35.4",
+    "unzipper": "^0.12.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "jest": "^29.7.0",
+    "jsdom": "^30.0.1",
     "supertest": "^7.0.0"
   }
 }

@@ -13,7 +13,6 @@ const path = require('path');
 function renderLayouts() {
 
   const active = Layout.getActiveLayout();
-  console.log(`[Layout] Current active layout: ${active}`);
 
   const layoutsDir = path.join(__dirname, '../layouts');
 

@@ -292,6 +292,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (iframe && store.liveReload) iframe.src = buildPreviewSrc(store.activeRoute);
   }
 
+  // Remote-triggered refresh (SSE): waits while the update guard denies
+  // (unsaved changes, in-flight save). Explicit callers use refreshPreview().
+  function refreshPreviewRemote() {
+    try {
+      var g = window.AcroxaUpdateGuard && window.AcroxaUpdateGuard.canPatch
+        ? window.AcroxaUpdateGuard.canPatch()
+        : { ok: true };
+      if (!g.ok) return;
+    } catch (_) {}
+    refreshPreview();
+  }
+
   // ─────────────────────────────────────────────────────────────
   // ROUTES
   // ─────────────────────────────────────────────────────────────
@@ -529,6 +541,13 @@ function markDirty() {
 
   store.unsavedChanges = dirty;
 
+  // Live-update guard: remote-triggered preview refreshes wait while the
+  // user has unsaved work (explicit user actions bypass via force).
+  try {
+    var G = window.AcroxaUpdateGuard;
+    if (G) { if (dirty) G.lock('customizer', 'unsaved-changes'); else G.unlock('customizer'); }
+  } catch (_) {}
+
   if (unsavedBadge) {
     unsavedBadge.style.display = dirty ? "flex" : "none";
   }
@@ -539,6 +558,7 @@ function markDirty() {
   async function _flushLayoutConfig({ silent = true } = {}) {
     if (store._autoSaveInFlight) return;
     store._autoSaveInFlight = true;
+    try { if (window.AcroxaUpdateGuard) window.AcroxaUpdateGuard.lock('customizer-saving', 'save-in-flight'); } catch (_) {}
     try {
       const res = await fetch(`${API_BASE}/${store.layoutId}/config`, {
         method: "PATCH",
@@ -554,6 +574,7 @@ function markDirty() {
       if (!silent) System?.showToast?.(`Save failed: ${err.message}`, "error");
     } finally {
       store._autoSaveInFlight = false;
+      try { if (window.AcroxaUpdateGuard) window.AcroxaUpdateGuard.unlock('customizer-saving'); } catch (_) {}
     }
   }
 
@@ -589,8 +610,6 @@ function markDirty() {
   });
 
 function _setPending(section, key, value, replace = false) {
-  // STEP 8: Debug log
- 
   const nestedUnderLayout = new Set(["colors", "typography", "homepage", "animations", "layout", "layout_sidebar", "layout_ext"]);
   const targetRoot = nestedUnderLayout.has(section)
     ? (store.pendingConfig.layout || (store.pendingConfig.layout = {}))
@@ -619,7 +638,6 @@ function _setPending(section, key, value, replace = false) {
   markDirty();
   if (store.liveReload) _injectCSSVarsLive();
   _scheduleAutoSave();
-  console.log(store.pendingConfig)
 }
  
 
@@ -661,10 +679,34 @@ function _setPending(section, key, value, replace = false) {
 
   function initSSE() {
     if (!window.EventSource) return;
-    try {
-      const sse = new EventSource(`${API_BASE}/sse`);
-      sse.addEventListener("layout.updated", () => { if (store.liveReload) refreshPreview(); });
-    } catch (_) {}
+    let sse = null;
+    let backoff = 2000;
+    function open() {
+      try { if (sse) try { sse.close(); } catch (_) {} } catch (_) {}
+      try {
+        sse = new EventSource(`${API_BASE}/sse`);
+        sse.addEventListener("layout.updated", () => { refreshPreviewRemote(); });
+        sse.addEventListener("runtime.invalidated", (e) => {
+          try {
+            const inv = JSON.parse(e.data || "{}");
+            if (inv.strategy === "stylesheet-refresh") return; // iframe CSS handled by layout vars path
+            refreshPreviewRemote();
+          } catch (_) { refreshPreviewRemote(); }
+        });
+        sse.addEventListener("ping", () => { backoff = 2000; });
+        sse.onerror = () => {
+          try { sse.close(); } catch (_) {} sse = null;
+          if (document.hidden) {
+            const h = () => { if (!document.hidden) { document.removeEventListener("visibilitychange", h); open(); } };
+            document.addEventListener("visibilitychange", h);
+            return;
+          }
+          setTimeout(open, backoff);
+          backoff = Math.min(backoff * 2, 15000);
+        };
+      } catch (_) {}
+    }
+    open();
   }
 
   // ─────────────────────────────────────────────────────────────

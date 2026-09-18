@@ -1,4 +1,4 @@
-// public/acrx/assets/js/viewUser.js — User detail page client
+// public/acrx/assets/js/viewUser.js — User profile preview (SSE-first)
 'use strict';
 
 (function ViewUserModule() {
@@ -10,7 +10,6 @@
 
   const userId = _pstate.userId;
   const sessionUser = _pstate.sessionUser;
-
   const API_PREFIX = '/acr/api/users';
 
   async function apiFetch(path, opts = {}) {
@@ -48,7 +47,6 @@
   function confirm(title, msg, danger = false) {
     let overlay = document.getElementById('u-confirm-modal');
     if (!overlay) return Promise.resolve(false);
-
     document.getElementById('u-modal-title').textContent = title;
     document.getElementById('u-modal-msg').textContent = msg;
     const okBtn = document.getElementById('u-modal-confirm');
@@ -67,11 +65,117 @@
     if (_resolveConfirm) { _resolveConfirm(false); _resolveConfirm = null; }
   }
 
+  // ── SSE live updates ──
+  let evtSource = null;
+
+  function connectSSE() {
+    if (evtSource) { evtSource.close(); }
+    evtSource = new EventSource('/acr/api/activity-stream');
+    evtSource.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'activity' && data.userId === userId) {
+          updateLiveStatus(data);
+        }
+      } catch {}
+    };
+    evtSource.onerror = () => {
+      evtSource.close();
+      setTimeout(connectSSE, 5000);
+    };
+  }
+
+  function updateLiveStatus(data) {
+    const dot = document.querySelector('[data-field="online-dot"]');
+    const pill = document.querySelector('[data-field="status-pill"]');
+    const statusEl = document.querySelector('[data-field="live-status"]');
+    const pageEl = document.querySelector('[data-field="live-page"]');
+    const seenEl = document.querySelector('[data-field="live-seen"]');
+    const ipEl = document.querySelector('[data-field="live-ip"]');
+
+    // Update rings if present
+    const ringVisits = document.querySelector('#ring-visits .pf-ring-value');
+    const ringPages = document.querySelector('#ring-pages .pf-ring-value');
+    const ringActions = document.querySelector('#ring-actions .pf-ring-value');
+    const ringTime = document.querySelector('#ring-time .pf-ring-value');
+
+    if (data.activePage) {
+      // Online
+      if (dot) dot.className = 'pf-online-dot is-online';
+      if (pill) { pill.className = 'pf-status-pill pf-status--online'; pill.innerHTML = '<i class="pf-status-dot"></i> Online'; }
+      if (statusEl) { statusEl.textContent = 'Online'; statusEl.className = 'pf-stat-value pf-val--online'; }
+      if (pageEl) pageEl.textContent = data.activePage;
+      if (seenEl) seenEl.textContent = 'just now';
+      if (ipEl && data.ip) ipEl.textContent = data.ip;
+
+      // Update rings with new values
+      if (ringVisits && data.todayVisits !== undefined) {
+        ringVisits.textContent = String(data.todayVisits);
+        updateRingProgress('ring-visits', data.todayVisits, Math.max(data.todayVisits, 10));
+      }
+      if (ringPages && data.pagesViewedToday !== undefined) {
+        ringPages.textContent = String(data.pagesViewedToday);
+        updateRingProgress('ring-pages', data.pagesViewedToday, Math.max(data.pagesViewedToday, 10));
+      }
+      if (ringActions && data.actionsToday !== undefined) {
+        ringActions.textContent = String(data.actionsToday);
+        updateRingProgress('ring-actions', data.actionsToday, Math.max(data.actionsToday, 10));
+      }
+      if (ringTime && data.totalTimeOnline !== undefined) {
+        const mins = Math.round(data.totalTimeOnline / 60000);
+        ringTime.textContent = String(mins);
+        updateRingProgress('ring-time', mins, Math.max(mins, 480));
+      }
+    } else {
+      // Offline
+      if (dot) dot.className = 'pf-online-dot';
+      if (pill) { pill.className = 'pf-status-pill pf-status--offline'; pill.innerHTML = '<i class="pf-status-dot"></i> Offline'; }
+      if (statusEl) { statusEl.textContent = 'Offline'; statusEl.className = 'pf-stat-value'; }
+    }
+  }
+
+  function updateRingProgress(id, value, max) {
+    const progEl = document.querySelector(`#${id} .pf-ring-progress`);
+    if (!progEl) return;
+    const circ = parseFloat(progEl.getAttribute('data-circumference')) || 2 * Math.PI * 46.5;
+    const pct = Math.min(value / Math.max(max, 1), 1);
+    const offset = circ * (1 - pct);
+    progEl.setAttribute('stroke-dashoffset', String(offset));
+  }
+
+  function formatDuration(ms) {
+    if (!ms) return '0m';
+    const mins = Math.floor(ms / 60000);
+    if (mins < 60) return `${mins}m`;
+    return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  }
+
+  function relativeTime(date) {
+    if (!date) return 'Never';
+    const diff = Date.now() - new Date(date).getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    if (mins < 2)   return 'just now';
+    if (mins < 60)  return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7)   return `${days}d ago`;
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function format(date) {
+    if (!date) return '—';
+    return new Date(date).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  // ── Actions ──
   function wireEvents() {
     document.body.addEventListener('click', e => {
       const btn = e.target.closest('[data-click]');
       if (!btn) {
-        // Modal close
         if (e.target.closest('#u-modal-close') || e.target.closest('#u-modal-cancel')) { closeModal(); return; }
         if (e.target.id === 'u-modal-confirm') {
           if (_resolveConfirm) { _resolveConfirm(true); _resolveConfirm = null; }
@@ -96,15 +200,15 @@
       }
 
       if (action === 'toggle-status') {
-        const isSuspended = document.querySelector('.vu-status-pill--suspended');
-        const label = isSuspended ? 'Activate' : 'Suspend';
+        const suspended = document.querySelector('.pf-status-pill')?.textContent?.includes('Suspended') || false;
+        const label = suspended ? 'Activate' : 'Suspend';
         confirm(`${label} User`, `${label} this user?`).then(ok => {
           if (!ok) return;
           apiFetch(`/${userId}/status`, {
             method: 'POST',
-            body: JSON.stringify({ action: isSuspended ? 'activate' : 'suspend' })
+            body: JSON.stringify({ action: suspended ? 'activate' : 'suspend' })
           }).then(() => {
-            toast(`User ${isSuspended ? 'activated' : 'suspended'}.`, 'success');
+            toast(`User ${suspended ? 'activated' : 'suspended'}.`, 'success');
             setTimeout(() => location.reload(), 800);
           }).catch(err => toast(err.message, 'error'));
         });
@@ -122,7 +226,6 @@
       }
     });
 
-    // Modal close on overlay click
     document.addEventListener('click', e => {
       if (e.target.id === 'u-confirm-modal') closeModal();
     });
@@ -130,6 +233,7 @@
 
   function init() {
     wireEvents();
+    connectSSE();
   }
 
   if (document.readyState === 'loading') {

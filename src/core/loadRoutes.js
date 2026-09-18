@@ -82,7 +82,8 @@ function buildInnerRouter() {
   const innerRouter = express.Router();
   const files = getRouteFiles();
 
-  console.log("[Routes] Building inner router…\n");
+  const verbose = process.env.NODE_ENV !== "production";
+  let mounted = 0;
 
   files.forEach(file => {
     const filePath = path.join(routesDir, file);
@@ -99,8 +100,8 @@ function buildInnerRouter() {
         innerRouter.use(prefix, routeModule);
       }
 
-      console.log(`[Routes] Mounted → ${prefix.padEnd(12)} (${file})`);
-          console.log(`[Routes] Mounting ${file} → ${prefix} (middleware: ${middleware.length})`);
+      mounted++;
+      if (verbose) require("./logStream").quiet("info", `[Routes] Mounted → ${prefix.padEnd(12)} (${file})`);
 
     } catch (err) {
       // A broken route file must never bring down the whole router.
@@ -108,7 +109,7 @@ function buildInnerRouter() {
     }
   });
 
-  console.log("\n[Routes] Inner router built.\n");
+  require("./logStream").quiet("success", `[Routes] Router ready (${mounted}/${files.length} files).`);
   return innerRouter;
 }
 
@@ -136,12 +137,10 @@ proxyRouter.use((req, res, next) => {
  * Returns a summary of what was loaded.
  */
 function reloadRoutes() {
-  console.log("[Routes] Hot-reload triggered…");
-
   try {
     const newRouter = buildInnerRouter();
     currentRouter = newRouter; // Atomic swap — in-flight requests finish normally
-    console.log("[Routes] Hot-reload complete.");
+    return { success: true, timestamp: new Date().toISOString() };
     return { success: true, timestamp: new Date().toISOString() };
   } catch (err) {
     console.error("[Routes] Hot-reload failed:", err.message);

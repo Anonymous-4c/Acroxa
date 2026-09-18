@@ -32,7 +32,10 @@ class CMSHotReloader {
       ignored: this.ignored,
       ignoreInitial: true,
       usePolling: process.platform === 'win32',
-      awaitWriteFinish: true
+      // Fast stability gate (was: awaitWriteFinish:true → 2000ms default
+      // threshold, the dominant cost of every live update). Editors save
+      // atomically; 150ms of write silence is plenty to avoid partial reads.
+      awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 }
     });
 
     this.watcher
@@ -69,6 +72,7 @@ class CMSHotReloader {
   // FILE EVENT HANDLER (coalescing — rapid saves become one transaction §18)
   // -----------------------------
   handle(type, file) {
+    try { require('./core/runtime/debug').log("watch", `${type} ${file}`); } catch (_) {}
     // Watch new files immediately so new dirs aren't missed; the reload work
     // waits for the 250ms coalescing window.
     if (type === 'add') {
@@ -86,6 +90,10 @@ class CMSHotReloader {
     const batch = this.pending;
     this.pending = [];
     if (!batch.length) return;
+    try {
+      const dbg = require('./core/runtime/debug');
+      dbg.log("watch", `coalesced batch:${batch.length} ${batch.map((e) => `${e.type}:${path.basename(String(e.file))}`).join(", ")}`);
+    } catch (_) {}
     this.isReloading = true;
     try {
       for (const { type, file } of batch) {
@@ -155,6 +163,11 @@ class CMSHotReloader {
     let plan = null;
     try { plan = require('./core/runtime/planner').choose({ kind, scope }).strategy; } catch (_) {}
     console.log(`♻️  Reload [${kind}/${scope}]: ${path.basename(String(file))}${plan ? ` → ${plan}` : ""}`);
+    try {
+      const dbg = require('./core/runtime/debug');
+      dbg.log("classify", `${path.basename(String(file))} -> kind=${kind} scope=${scope}`);
+      if (plan) dbg.log("plan", `${kind}/${scope} -> strategy=${plan}`);
+    } catch (_) {}
 
     const notify = (event, data) => {
       try { require('./core/sseHub').broadcast(event, data || {}); } catch (_) {}
@@ -203,9 +216,16 @@ class CMSHotReloader {
       return c;
     }
 
-    if (norm.includes('/extensions/')) {
-      global.acrx?.reloadExtensions?.();
-      return c;
+    if (kind === 'extension' || norm.includes('/extensions/') || norm.includes('/plugins/')) {
+      try {
+        const owner = require('./core/runtime/owners').ownerOf(file);
+        global.acrx?.reloadExtensions?.(owner);
+        try { require('./core/runtime/events').emit("extension:loaded", { owner, file }); } catch (_) {}
+      } catch (_) {
+        global.acrx?.reloadExtensions?.();
+      }
+      notify('page.updated', { file, kind: 'extension' });
+      return { kind: 'extension', scope: c.scope || 'module' };
     }
 
     if (kind === 'config') {
@@ -262,7 +282,8 @@ class CMSHotReloader {
     if (norm.includes('/views/')) return { kind: 'view', scope: 'view' };
     if (norm.includes('/routes/')) return { kind: 'route', scope: 'routes' };
     if (norm.includes('/controllers/') || norm.includes('/services/')) return { kind: 'api', scope: 'api' };
-    if (norm.includes('acrx/assets/js')) return { kind: 'frontend', scope: 'frontend-module' };
+    if (norm.includes('acrx/assets/js') || norm.includes('public/assets/')) return { kind: 'frontend', scope: 'frontend-module' };
+    if (norm.includes('/extensions/') || norm.includes('/plugins/')) return { kind: 'extension', scope: 'module' };
     if (norm.includes('/core/') || norm.includes('/modules/') || norm.includes('/functions/')) return { kind: 'backend', scope: 'core' };
     if (lower.endsWith('.json') && (lower.includes('config') || lower.includes('paths'))) return { kind: 'config', scope: 'config' };
     if (norm.includes('/models/')) return { kind: 'backend', scope: 'models' };
@@ -319,6 +340,7 @@ class CMSHotReloader {
   clearCache(file) {
     const count = this.clearModuleScoped(file);
     console.log(`🧹 Cache cleared (scoped): ${count} module(s) for ${path.basename(String(file))}`);
+    try { require('./core/runtime/debug').log("cache", `scoped evict ${count} module(s) for ${path.basename(String(file))}`); } catch (_) {}
     return count;
   }
 

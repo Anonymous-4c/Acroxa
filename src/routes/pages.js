@@ -55,25 +55,28 @@ function loadViews() {
         });
       })
     }});
-  console.log(`Loaded ${views.length} page(s) from ${VIEWS_DIR}`);
-  // AcroxaJS impact edges: each admin page depends on its view source file,
-  // so a view change invalidates exactly the pages it renders (never the
-  // whole app). The dep key is the bare normalized absolute path — the same
-  // key space file-change invalidations query with. depend() overwrites, so
-  // rebuilds re-declare idempotently. graph._key normalizes lookups (win32).
+  try { require("../core/logStream").quiet("info", `[pages] Loaded ${views.length} page(s) from ${VIEWS_DIR}`); } catch (_) {}
+  // AcroxaJS impact edges: each admin page depends on its view source file
+  // AND every project-internal module the view requires (Phase 3 import
+  // walk), so a component/module/service change invalidates exactly the
+  // pages it reaches (never the whole app). The dep key is the bare
+  // normalized absolute path — the same key space file-change invalidations
+  // query with. depend() overwrites, so rebuilds re-declare idempotently.
+  // graph._key normalizes lookups (win32).
   try {
     const graph = require("../core/runtime/graph");
+    const depsMod = require("../core/runtime/render/deps");
     for (const v of views) {
       if (v.path && v.__file) {
-        graph.depend(
+        depsMod.declarePageDeps(
           "page:" + v.path,
-          [path.join(VIEWS_DIR, v.__file).replace(/\\/g, "/")]
+          path.join(VIEWS_DIR, v.__file).replace(/\\/g, "/")
         );
       }
     }
   } catch (_) {}
   if (process.env.NODE_ENV !== "production") {
-    console.log(views.map(v => `  ${v.path} → ${v.render ? v.render.name : "no render fn"} (${v.__file})`).join("\n"));
+    try { require("../core/logStream").quiet("info", `[pages] map:\n` + views.map(v => `  ${v.path} → ${v.render ? v.render.name : "no render fn"} (${v.__file})`).join("\n")); } catch (_) {}
   }
   if (loadErrors.length) {
     console.error(`[pages] ${loadErrors.length} view file(s) failed to load (routes skipped, rest live).`);
@@ -106,6 +109,33 @@ function normalizeScripts(scripts = []) {
   });
 }
 
+// AcroxaJS Phase 6/7: commit the content-region snapshot (tree + deps) for a
+// page render, through the render scheduler fence (out-of-order renders of
+// the same page can never overwrite — newest valid state wins). Returns the
+// committed snapshot or null. Shared by the full render path and the
+// fragment (patch protocol) path.
+function commitContentSnapshot(pageId, rc, html) {
+  try {
+    if (!rc || !rc.nodes || !rc.nodes.length) return null;
+    const scheduler = require("../core/runtime/render/scheduler");
+    const token = scheduler.begin(pageId);
+    const snapshots = require("../core/runtime/render/snapshot");
+    const treeMod = require("../core/runtime/render/tree");
+    const built = treeMod.build(rc.nodes);
+    const root = built.roots.length === 1
+      ? treeMod.serialize(built.roots[0])
+      : { type: "fragment", id: "page-root", children: built.roots.map((r) => treeMod.serialize(r)) };
+    const r = scheduler.commit(pageId, token, () => snapshots.commit(pageId, {
+      html,
+      root,
+      deps: [...rc.deps],
+      owners: rc.ownerId ? [rc.ownerId] : [],
+      ms: rc.meta().ms,
+    }));
+    return r.committed ? r.snapshot : null;
+  } catch (_) { return null; }
+}
+
 function renderPageWrapper(req, res, options = {}) {
   const {
     title,
@@ -129,8 +159,48 @@ function renderPageWrapper(req, res, options = {}) {
   if (wantsFragment) {
     let rev = 0;
     try { rev = require("../core/runtime/revision").get(); } catch (_) {}
-    res.setHeader("Cache-Control", "no-store");
-    return res.json({
+
+    // AcroxaJS Phase 5/6 patch protocol: commit the fresh content render,
+    // diff against the previous snapshot, and send ops when the difference
+    // is expressible (bounded). Otherwise the client falls back to the
+    // proven full-html swap. Same-shape roots only (element|fragment).
+    let patchInfo = null;
+    try {
+      const rcMod = require("../core/runtime/render/context");
+      const rc = rcMod.current();
+      if (rc && rc.nodes && rc.nodes.length) {
+        const pageId = "page:" + req.path;
+        const snapshots = require("../core/runtime/render/snapshot");
+        const prev = snapshots.latest(pageId);
+        const snap = commitContentSnapshot(pageId, rc, filteredContent);
+        if (
+          prev && snap && prev.root && prev.root.type === snap.root.type &&
+          (snap.root.type === "element" || snap.root.type === "fragment")
+        ) {
+          const diffMod = require("../core/runtime/diff");
+          const patchMod = require("../core/runtime/diff/patch");
+          const d = diffMod.diff(prev.root, snap.root);
+          // Lifecycle hook (Phase 9): the diff is generated.
+          try { require("../core/runtime/hookBus").run("render:afterDiff", { page: pageId, ops: d.ops.length, unchanged: d.unchanged }); } catch (_) {}
+          if (!d.unchanged && d.ops.length && d.ops.length <= 40) {
+            const p = patchMod.makePatch({
+              page: pageId,
+              fromVersion: prev.version,
+              toVersion: snap.version,
+              ops: d.ops,
+            });
+            if (p.valid) {
+              patchInfo = p;
+              // Lifecycle hook (Phase 9): the patch reaches the browser
+              // via this response (the server's role ends at send).
+              try { require("../core/runtime/hookBus").run("render:patchSent", { page: pageId, patchId: p.patchId, fromVersion: p.fromVersion, toVersion: p.toVersion, ops: p.ops.length }); } catch (_) {}
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    const body = {
       success: true,
       html: filteredContent,
       title: title || "Acroxa",
@@ -138,8 +208,37 @@ function renderPageWrapper(req, res, options = {}) {
       js: normalizeScripts(js || []),
       layout: layout || "full",
       rev,
-    });
+    };
+    // Always send the committed content version so the client can version-
+    // gate op patches (fromVersion must match) and resync on gaps.
+    try {
+      const snapshots = require("../core/runtime/render/snapshot");
+      const snap = snapshots.latest("page:" + req.path);
+      if (snap) body.contentVersion = snap.version;
+    } catch (_) {}
+    if (patchInfo) {
+      body.ops = patchInfo.ops;
+      body.fromVersion = patchInfo.fromVersion;
+      body.toVersion = patchInfo.toVersion;
+      body.patchId = patchInfo.patchId;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    return res.json(body);
   }
+
+  // AcroxaJS Phase 6: commit the content-region snapshot BEFORE rendering so
+  // the version can be stamped on #acrx-content (client op-patch boot) and
+  // the first fragment request after a page load can diff (op-level) instead
+  // of always swapping the whole region.
+  let contentVersion = null;
+  try {
+    const rcMod = require("../core/runtime/render/context");
+    const rc = rcMod.current();
+    if (rc) {
+      const snap = commitContentSnapshot("page:" + req.path, rc, filteredContent);
+      if (snap) contentVersion = snap.version;
+    }
+  } catch (_) {}
 
   const html = renderLayout({
     head: {
@@ -172,7 +271,8 @@ function renderPageWrapper(req, res, options = {}) {
 
     content: filteredContent,
     injectScript: res.locals.injectTokenScript,
-    layout
+    layout,
+    contentVersion
   });
 
   let out = html;
@@ -266,7 +366,11 @@ if (process.env.E2E_TEST_ROUTER === "1" && process.env.NODE_ENV !== "production"
 
   const testingStub = (req, res, next) => {
     req.user = { id: "e2e-test", username: "e2e-test", role: "admin", roles: ["admin"] };
-    res.locals.injectTokenScript = "";
+    // Mirror the production auth script's unhide behavior (authMiddleware
+    // injectTokenScript removes body.hidden after verify). The testing
+    // router has no session to verify, so unhide directly — same pixels
+    // an authed user sees, no auth logic bypassed beyond this dev router.
+    res.locals.injectTokenScript = `<script class="testing-stub">document.body.classList.remove("hidden")</script>`;
     next();
   };
 
@@ -283,6 +387,23 @@ if (process.env.E2E_TEST_ROUTER === "1" && process.env.NODE_ENV !== "production"
   router.get("/acrx/testing/api/system/runtime", (req, res) => {
     try {
       return require("../controllers/runtimeController").getSnapshot(req, res);
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  // Dev-only server log tail (staged [Acroxa:*] runtime trace). GET-only,
+  // bounded, same no-auth testing scope as the alias above.
+  router.get("/acrx/testing/api/system/logs", (req, res) => {
+    try {
+      const ls = require("../core/logStream");
+      const q = req.query || {};
+      const out = ls.readHistory({
+        limit: Math.max(1, Math.min(parseInt(q.limit, 10) || 200, 500)),
+        offset: 0,
+      });
+      res.setHeader("Cache-Control", "no-store");
+      return res.json({ success: true, total: out.total, entries: out.entries });
     } catch (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
@@ -309,15 +430,25 @@ if (process.env.E2E_TEST_ROUTER === "1" && process.env.NODE_ENV !== "production"
 async function handleProtectedPage(page, req, res) {
   try {
     let content = "";
+    const env = process.env.NODE_ENV === "production" ? "production" : "development";
 
     if (!page.contentType || page.contentType === "render") {
       // render was resolved to a function reference by loadViews().
       const renderFn = typeof page.render === "function" ? page.render : null;
 
-      content =
-        typeof renderFn === "function"
-          ? await renderFn(req, res)
-          : renderFn;
+      if (typeof renderFn === "function") {
+        // AcroxaJS Phase 6: render inside a render context so el() records
+        // the content-region tree and deps — the snapshot/diff/patch chain's
+        // source. withRenderContext never throws from its own machinery;
+        // view errors propagate untouched (no double-execution retry).
+        const rcMod = require("../core/runtime/render/context");
+        content = await rcMod.withRenderContext(
+          { pageId: "page:" + page.path, route: page.path, env, ownerId: "core:views" },
+          async () => renderFn(req, res)
+        );
+      } else {
+        content = renderFn;
+      }
     }
     else if (page.contentType === "raw") {
       content =

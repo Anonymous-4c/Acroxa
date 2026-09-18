@@ -43,10 +43,10 @@ fs.readdirSync(modelsDir)
       if (typeof buildModel === "function") {
         const seq = initializeSequelize();
         models[modelName] = buildModel(seq);
-        console.log(`[SQL] Model loaded → ${modelName}`);
+        require("../core/logStream").quiet("info", `[SQL] Model loaded → ${modelName}`);
       }
     } catch (err) {
-      console.error(`[SQL] Failed to load model ${modelName}:`, err.message);
+      require("../core/logStream").quiet("warn", `[SQL] Failed to load model ${modelName}:`, err.message);
     }
   });
 

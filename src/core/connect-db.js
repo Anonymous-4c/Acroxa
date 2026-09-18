@@ -18,25 +18,27 @@ global.__acroxa_db__ = global.__acroxa_db__ || {
 
 let state = global.__acroxa_db__;
 
+const _quiet = (type, ...args) => { try { require("./logStream").quiet(type, ...args); } catch (_) {} };
+
 async function _seedRegistry(models) {
   try {
     if (models.Engine?.seedDefaults) await models.Engine.seedDefaults();
     if (models.Route?.seedDefaults) await models.Route.seedDefaults();
   } catch (err) {
-    console.warn("Registry seed skipped:", err.message);
+    _quiet("warn", "Registry seed skipped:", err.message);
   }
 }
 
 async function connectDB(config = null) {
   // ✅ If models already exist → reuse
   if (state.models) {
-    console.log("⚡ Reusing existing DB models");
+    _quiet("info", "⚡ Reusing existing DB models");
     return state.models;
   }
   if (config == null) {
     config = loadConfig();
   }
-  console.log("DB config:", JSON.stringify(config, null, 2));
+  // Never dump the full config: it carries DB credentials. One redacted line is enough.
 
   // Support both flat keys (setup wizard) and nested config.database
   const dbConfig = config.database || {};
@@ -48,7 +50,7 @@ async function connectDB(config = null) {
   const dbPort = config.db_port || dbConfig.port || "";
   const dbUrl  = dbConfig.url || null;
 
-  console.log(`Connecting to ${dbType.toUpperCase()}...`);
+  _quiet("info", `Connecting to ${dbType.toUpperCase()} ${dbName}@${dbHost}...`);
 
   try {
     if (dbType === "mongodb") {
@@ -58,33 +60,48 @@ async function connectDB(config = null) {
 
       // ✅ Prevent duplicate connection attempts
       if (mongoose.connection.readyState === 1) {
-        console.log("⚡ Mongo already connected (readyState=1)");
+        _quiet("info", "⚡ Mongo already connected (readyState=1)");
         state.mongoConnected = true;
       } else if (state.mongoUri && state.mongoUri !== uri) {
         throw new Error("Different Mongo URI detected during hot reload");
       } else {
-        await mongoose.connect(uri, {
-          serverSelectionTimeoutMS: 5000,
-          socketTimeoutMS: 45000,
-        });
+        // Transient stalls (slow first handshake under load) must not kill
+        // the whole server: retry a few times before giving up.
+        let lastErr = null;
+        for (let attempt = 1; attempt <= 4; attempt++) {
+          try {
+            await mongoose.connect(uri, {
+              serverSelectionTimeoutMS: 8000,
+              socketTimeoutMS: 45000,
+            });
+            lastErr = null;
+            break;
+          } catch (err) {
+            lastErr = err;
+            console.error(`Mongo connect attempt ${attempt}/4 failed: ${err.message}`);
+            try { await mongoose.disconnect(); } catch { /* reset for retry */ }
+            if (attempt < 4) await new Promise((r) => setTimeout(r, 2000 * attempt));
+          }
+        }
+        if (lastErr) throw lastErr;
 
         state.mongoConnected = true;
         state.mongoUri = uri;
 
-        console.log(`✅ MongoDB connected → ${dbName}`);
+        _quiet("success", `✅ MongoDB connected → ${dbName}`);
       }
 
       // ✅ Load models ONCE
       if (!state.models) {
         state.models = require("../models/index.js").mongo;
-        console.log("📦 MongoDB models loaded");
+        _quiet("info", "📦 MongoDB models loaded");
         await _seedRegistry(state.models);
       }
 
     } else {
       // === SQL (same persistence idea)
       if (state.sequelize) {
-        console.log("⚡ Reusing Sequelize instance");
+        _quiet("info", "⚡ Reusing Sequelize instance");
       } else {
         const dialect =
           dbType === "mysql"
@@ -108,17 +125,17 @@ async function connectDB(config = null) {
         });
 
         await state.sequelize.authenticate();
-        console.log(`✅ ${dialect.toUpperCase()} connected`);
+        _quiet("success", `✅ ${dialect.toUpperCase()} connected`);
 
         state.models = require("../models/index.js").sql;
 
         await state.sequelize.sync({ alter: false });
-        console.log("📦 SQL models ready");
+        _quiet("info", "📦 SQL models ready");
         await _seedRegistry(state.models);
       }
     }
 
-    console.log(`Database ready → ${dbType.toUpperCase()}\n`);
+    _quiet("success", `Database ready → ${dbType.toUpperCase()}`);
     return state.models;
 
   } catch (err) {
@@ -186,7 +203,7 @@ async function disconnectDB() {
     state.sequelize = null;
     state.mongoUri = null;
 
-    console.log("Disconnected from database");
+    _quiet("info", "Disconnected from database");
 
   } catch (err) {
     console.error("Disconnect error:", err.message);

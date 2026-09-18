@@ -14,7 +14,13 @@ function renderNullLayout({ head, content, injectScript }) {
   `;
 }
 
-function renderFullLayout({ head, header, sidebar, footer, content, injectScript }) {
+function renderFullLayout({ head, header, sidebar, footer, content, injectScript, contentVersion }) {
+  // AcroxaJS Phase 6: stamp the committed content-region version so the
+  // admin client version-gates op patches from boot (the FIRST post-load
+  // update can be an op-level patch, not always a full swap).
+  const versionAttr = contentVersion != null
+    ? ` data-acrx-content-version="${String(contentVersion)}"`
+    : "";
   return `
     <!DOCTYPE html>
     <html class="classic" lang="en">
@@ -27,11 +33,11 @@ function renderFullLayout({ head, header, sidebar, footer, content, injectScript
 
           <div class="w70">
             <div class="content">
-              <div class="main">
+              <div class="main" id="acrx-content" data-acrx-region="content"${versionAttr}>
                 ${content || ""}
 
                 <!-- ✨ Acroxa Footer Section -->
-                <div class="acrx-footer">
+                <div class="acrx-footer" data-acrx-region="footer">
                   <div class="acrx-footer-line"></div>
                   <p class="acrx-footer-text"></p>
                   <div class="acrx-footer-line"></div>

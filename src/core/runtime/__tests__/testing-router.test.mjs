@@ -56,7 +56,10 @@ describe("testing aliases gates (pages.js)", () => {
   });
 
   it("skips the auth-redirect script injection", () => {
-    assert.ok(code.includes('injectTokenScript = ""'), "must neutralize the /acr/api/verify redirect script");
+    const stub = code.slice(code.indexOf("const testingStub"), code.indexOf('router.get("/acrx/testing"'));
+    assert.ok(!stub.includes("/acr/api/verify"), "stub must not carry the verify redirect script");
+    assert.ok(!stub.includes("location.href"), "stub must never redirect to login");
+    assert.ok(stub.includes('remove("hidden")'), "stub must still unhide the body for visual parity");
   });
 
   it("keeps the role gate (stub is admin, other roles still checked)", () => {

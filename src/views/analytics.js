@@ -402,3 +402,21 @@ module.exports = {
   TopPageRow,
   SourceRow
 };
+
+// Route registration (consumed by src/routes/pages.js loadViews).
+// Chart.js provides the dashboard canvases. Pinned CDN with graceful local
+// degradation: every client loader try/catches, so tables, insights and
+// anomalies keep working offline while charts log and skip.
+module.exports.meta = [
+  {
+    path: "/acrx/analytics",
+    title: "Analytics - Acroxa",
+    render: "renderAnalytics",
+    css: ["/acrx/assets/css/ad-analytics.css"],
+    js: [
+      { src: "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js", defer: true },
+      "/acrx/assets/js/analytics.js",
+    ],
+    layout: "full",
+  },
+];

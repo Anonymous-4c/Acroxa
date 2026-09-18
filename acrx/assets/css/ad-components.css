@@ -732,3 +732,79 @@ svg {
 button.mp-btn.mp-upload-btn {
     border-radius: 30px 10px 10px 30px;
 }
+
+/* ============================================================
+   Widget Global Styling — Canva-like design tokens
+   Linked to the active layout palette via --layout-* vars with
+   graceful fallbacks to the Acroxa tokens. The Widgets studio
+   (/acrx/layouts/widgets) writes --wdg-*; the editor + public
+   site consume them. Nothing here is fake: every var maps to a
+   real widget class below.
+   ============================================================ */
+:root {
+  --layout-color-primary: var(--color-primary-500, #6366f1);
+  --layout-color-secondary: var(--accent-500, #8b5cf6);
+  --layout-color-surface: var(--color-primary-50, #ffffff);
+  --layout-color-ink: var(--color-primary-900, #111827);
+  --wdg-radius-sm: 8px;
+  --wdg-radius-md: 14px;
+  --wdg-radius-lg: 22px;
+  --wdg-radius-pill: 999px;
+  --wdg-border-width: 1px;
+  --wdg-border-color: var(--border, #e5e7eb);
+  --wdg-accent: var(--layout-color-primary);
+  --wdg-accent-ink: #ffffff;
+  --wdg-surface: var(--layout-color-surface);
+  --wdg-ink: var(--layout-color-ink);
+  --wdg-muted: var(--text-muted, #6b7280);
+  --wdg-code-bg: #0f172a;
+  --wdg-code-ink: #e2e8f0;
+  --wdg-code-accent: var(--layout-color-primary);
+  --wdg-table-header-bg: var(--layout-color-primary);
+  --wdg-table-header-ink: #ffffff;
+  --wdg-table-stripe: rgba(127,127,127,.08);
+  --wdg-table-border: var(--wdg-border-color);
+  --wdg-table-cell-pad: 10px 14px;
+  --wdg-table-radius: var(--wdg-radius-md);
+  --wdg-btn-radius: var(--wdg-radius-pill);
+  --wdg-card-radius: var(--wdg-radius-lg);
+  --wdg-alert-radius: var(--wdg-radius-md);
+}
+
+/* Code blocks */
+.acrx-codeblock, pre[class*="language-"], .acrx-code { background: var(--wdg-code-bg); color: var(--wdg-code-ink); border-radius: var(--wdg-radius-md); border: 1px solid var(--wdg-border-color); }
+.acrx-codeblock .acrx-code-head, .acrx-code-head { background: color-mix(in srgb, var(--wdg-code-accent) 18%, transparent); border-radius: var(--wdg-radius-md) var(--wdg-radius-md) 0 0; }
+
+/* Tables + sub-elements */
+.acrx-table-wrap { border-radius: var(--wdg-table-radius); border: var(--wdg-border-width) solid var(--wdg-table-border); overflow: hidden; background: var(--wdg-surface); }
+.acrx-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.acrx-table th { background: var(--wdg-table-header-bg); color: var(--wdg-table-header-ink); padding: var(--wdg-table-cell-pad); text-align: left; font-weight: 600; }
+.acrx-table td { padding: var(--wdg-table-cell-pad); border-top: 1px solid var(--wdg-table-border); color: var(--wdg-ink); }
+.acrx-table tr:nth-child(even) td { background: var(--wdg-table-stripe); }
+.acrx-table tr:first-child th:first-child { border-top-left-radius: var(--wdg-table-radius); }
+.acrx-table tr:first-child th:last-child { border-top-right-radius: var(--wdg-table-radius); }
+
+/* Buttons / cards / alerts / quotes */
+.acrx-btn { border-radius: var(--wdg-btn-radius); background: var(--wdg-accent); color: var(--wdg-accent-ink); }
+.acrx-btn-primary { background: var(--wdg-accent); }
+.acrx-card, .acrx-plan, .acrx-feature { border-radius: var(--wdg-card-radius); border: var(--wdg-border-width) solid var(--wdg-border-color); background: var(--wdg-surface); }
+.acrx-alert, .acrx-quote, blockquote.acrx-blockquote { border-radius: var(--wdg-alert-radius); border: 1px solid var(--wdg-border-color); border-left: 4px solid var(--wdg-accent); }
+.acrx-hero, .acrx-cta { border-radius: var(--wdg-radius-lg); }
+.acrx-gallery img, .acrx-image img, .acrx-video video { border-radius: var(--wdg-radius-md); }
+.acrx-tabs-bar { border-radius: var(--wdg-radius-md); }
+.acrx-tab-btn.is-active { background: var(--wdg-accent); color: var(--wdg-accent-ink); border-radius: var(--wdg-radius-sm); }
+.acrx-accordion-item { border-radius: var(--wdg-radius-md); border: 1px solid var(--wdg-border-color); }
+
+/* Widgets studio preview + controls */
+.wdg-studio-root { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+.wdg-studio-cats { display: flex; flex-direction: column; gap: 6px; }
+.wdg-studio-cat { text-align: left; border: 1px solid var(--border); background: transparent; border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.wdg-studio-cat.is-active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.wdg-studio-panel { border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.wdg-field { display: flex; flex-direction: column; gap: 6px; }
+.wdg-field label { font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; }
+.wdg-field input[type="range"] { width: 100%; }
+.wdg-field input[type="color"] { width: 48px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 8px; }
+.wdg-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.wdg-sync-note { font-size: 12px; opacity: .75; }
+@media (max-width: 900px) { .wdg-studio-root { grid-template-columns: 1fr; } }

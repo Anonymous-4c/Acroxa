@@ -590,10 +590,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 let _sessionData = null;
 let _sessionPollInterval = null;
+let _keepAliveInterval = null;
 
 /**
  * Initialize session data polling.
- * Fetches user info, session ID, active page etc. every 30 seconds.
+ * Fetches user info, session ID, active page etc. every 15 seconds.
  * Exposes window.Acroxa.session for other scripts to read.
  */
 function initSessionPolling() {
@@ -604,30 +605,49 @@ function initSessionPolling() {
 
     // Initial fetch
     fetchSessionData();
+    fetchKeepAlive();
 
-    // Poll every 30 seconds
-    _sessionPollInterval = setInterval(fetchSessionData, 30000);
+    // Poll session-data every 15 seconds (for page tracking)
+    _sessionPollInterval = setInterval(fetchSessionData, 15000);
+
+    // Poll keep-alive every 30 seconds (for session duration)
+    _keepAliveInterval = setInterval(fetchKeepAlive, 30000);
 
     // Also fetch on visibility change (tab regains focus)
     document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) fetchSessionData();
+        if (!document.hidden) {
+            fetchSessionData();
+            fetchKeepAlive();
+        }
     });
 
     // Send active page on navigation
     window.addEventListener("popstate", () => fetchSessionData({ page: window.location.pathname }));
+
+    // Expose function for SPA router to call on route change
+    window.Acroxa.trackPage = (path) => fetchSessionData({ page: path || window.location.pathname });
+
+    // Send page-close beacon so server knows user left
+    window.addEventListener("beforeunload", () => {
+        try {
+            const payload = JSON.stringify({ page: window.location.pathname, event: "close" });
+            const blob = new Blob([payload], { type: "application/json" });
+            navigator.sendBeacon("/acr/api/session-data", blob);
+        } catch (_) {}
+    });
 }
 
 /**
- * Fetch session data from the server.
+ * Fetch session data from the server (for page tracking).
  * @param {Object} extras - Extra query params (e.g. { page: '/current/path' })
  */
 async function fetchSessionData(extras = {}) {
     try {
-        const params = new URLSearchParams({ page: window.location.pathname, ...extras });
-        const res = await fetch(`/acr/api/session-data?${params}`, {
-            method: "GET",
+        const res = await fetch(`/acr/api/session-data`, {
+            method: "POST",
             credentials: "include",
-            headers: { "Accept": "application/json" },
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ page: window.location.pathname, ...extras }),
         });
 
         if (!res.ok) {
@@ -651,6 +671,49 @@ async function fetchSessionData(extras = {}) {
         // Network error — silently ignore, will retry on next interval
     }
 }
+
+/**
+ * Fetch keep-alive data from the server (session duration, stats).
+ */
+async function fetchKeepAlive() {
+    try {
+        const res = await fetch(`/acr/api/keep-alive`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ page: window.location.pathname }),
+        });
+
+        if (!res.ok) return;
+
+        const json = await res.json();
+        if (json.success && json.data) {
+            // Dispatch keep-alive event for other scripts
+            window.dispatchEvent(new CustomEvent("session:keepalive", { detail: json.data }));
+        }
+    } catch (err) {
+        // Silently ignore
+    }
+}
+
+/**
+ * Format duration in milliseconds to human readable string.
+ * @param {number} ms - Duration in milliseconds
+ * @returns {string} Formatted duration
+ */
+function formatDuration(ms) {
+    if (!ms || ms < 0) return '0s';
+    const secs = Math.floor(ms / 1000);
+    const mins = Math.floor(secs / 60);
+    const hours = Math.floor(mins / 60);
+    if (hours > 0) return `${hours}h ${mins % 60}m`;
+    if (mins > 0) return `${mins}m ${secs % 60}s`;
+    return `${secs}s`;
+}
+
+// Expose for other scripts
+window.Acroxa = window.Acroxa || {};
+window.Acroxa.formatDuration = formatDuration;
 
 function insertFooterMessage() {
     const lines = [
@@ -792,6 +855,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // hljs.js loads after this bundle on some pages: highlight when the
+    // library is actually present instead of throwing and aborting setup.
+    if (typeof hljs === "undefined") {
+      window.addEventListener("load", () => {
+        if (typeof hljs === "undefined") return;
+        document.querySelectorAll("pre code").forEach((block) => {
+          try { hljs.highlightElement(block); } catch { /* decorative */ }
+        });
+      }, { once: true });
+      return;
+    }
 
     const highlightAll = () => {
       document.querySelectorAll("pre code").forEach((block) => {

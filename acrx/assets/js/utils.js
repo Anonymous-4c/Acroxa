@@ -1,6 +1,10 @@
 /* utils.js */
 
-const Mini = (() => {
+// NOTE: `var` (not const/let) is intentional at the top level. Targeted
+// live updates eject stale <script> tags and inject fresh copies; a second
+// execution of this file must reassign the namespace instead of throwing
+// "Identifier 'Mini' has already been declared".
+var Mini = (() => {
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -1594,17 +1598,46 @@ Mini.OrbitalWheel = (() => {
     if (!match) return 'ow-';
     return match.slice(0, match.length - 'wheel'.length);
   }
- 
+
+  // Tolerantly decodes HTML entities left over in a data-* JSON attribute.
+  // Correctly single-escaped markup is already decoded by getAttribute(),
+  // but double-escaped markup (e.g. server pre-escaped before el()'s own
+  // escaping) comes back as `[{&quot;key&quot;...}]`. Decoding iteratively
+  // (up to 3 passes) recovers valid JSON in both cases.
+  function decodeAttrEntities(str) {
+    return String(str)
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;|&#x27;|&apos;/gi, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  }
+
+  function parseJsonAttr(raw) {
+    try {
+      return { ok: true, value: JSON.parse(raw) };
+    } catch (firstErr) {
+      let decoded = String(raw);
+      for (let i = 0; i < 3; i++) {
+        const next = decodeAttrEntities(decoded);
+        if (next === decoded) break;
+        decoded = next;
+        try {
+          return { ok: true, value: JSON.parse(decoded) };
+        } catch (err) { /* try next pass */ }
+      }
+      return { ok: false };
+    }
+  }
+
   function readItems(rootEl, fallbackItems) {
     if (Array.isArray(fallbackItems) && fallbackItems.length) return fallbackItems;
     const raw = rootEl.getAttribute('data-orbital-items');
     if (!raw) return [];
-    try {
-      return JSON.parse(raw);
-    } catch (err) {
-      console.error('Mini.OrbitalWheel: failed to parse data-orbital-items', err);
-      return [];
-    }
+    const parsed = parseJsonAttr(raw);
+    if (parsed.ok) return parsed.value;
+    console.error('Mini.OrbitalWheel: failed to parse data-orbital-items', raw.slice(0, 120));
+    return [];
   }
  
   // Reads settings the same way readItems() reads cards: explicit JS object
@@ -1614,11 +1647,9 @@ Mini.OrbitalWheel = (() => {
     let fromAttr = {};
     const raw = rootEl.getAttribute('data-orbital-settings');
     if (raw) {
-      try {
-        fromAttr = JSON.parse(raw);
-      } catch (err) {
-        console.error('Mini.OrbitalWheel: failed to parse data-orbital-settings', err);
-      }
+      const parsed = parseJsonAttr(raw);
+      if (parsed.ok) fromAttr = parsed.value;
+      else console.error('Mini.OrbitalWheel: failed to parse data-orbital-settings', raw.slice(0, 120));
     }
     return mergeSettings(fromAttr, explicitSettings || {});
   }
@@ -2182,27 +2213,52 @@ const EASE_IN_OUT = 'cubic-bezier(0.4, 0, 0.2, 1)'; // smooth in-out
     return match.slice(0, match.length - 'grid'.length);
   }
 
+  // Same tolerant entity-decoding as Mini.OrbitalWheel: recovers valid JSON
+  // from double-escaped data-* attributes (server pre-escaped before el()'s
+  // own escaping), while leaving correctly single-escaped markup untouched.
+  function decodeAttrEntities(str) {
+    return String(str)
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;|&#x27;|&apos;/gi, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  }
+
+  function parseJsonAttr(raw) {
+    try {
+      return { ok: true, value: JSON.parse(raw) };
+    } catch (firstErr) {
+      let decoded = String(raw);
+      for (let i = 0; i < 3; i++) {
+        const next = decodeAttrEntities(decoded);
+        if (next === decoded) break;
+        decoded = next;
+        try {
+          return { ok: true, value: JSON.parse(decoded) };
+        } catch (err) { /* try next pass */ }
+      }
+      return { ok: false };
+    }
+  }
+
   function readItems(rootEl, fallbackItems) {
     if (Array.isArray(fallbackItems) && fallbackItems.length) return fallbackItems;
     const raw = rootEl.getAttribute('data-instrument-items');
     if (!raw) return [];
-    try {
-      return JSON.parse(raw);
-    } catch (err) {
-      console.error('Mini.InstrumentDial: failed to parse data-instrument-items', err);
-      return [];
-    }
+    const parsed = parseJsonAttr(raw);
+    if (parsed.ok) return parsed.value;
+    console.error('Mini.InstrumentDial: failed to parse data-instrument-items', raw.slice(0, 120));
+    return [];
   }
 
   function readSettings(rootEl, explicitSettings) {
     let fromAttr = {};
     const raw = rootEl.getAttribute('data-instrument-settings');
     if (raw) {
-      try {
-        fromAttr = JSON.parse(raw);
-      } catch (err) {
-        console.error('Mini.InstrumentDial: failed to parse data-instrument-settings', err);
-      }
+      const parsed = parseJsonAttr(raw);
+      if (parsed.ok) fromAttr = parsed.value;
+      else console.error('Mini.InstrumentDial: failed to parse data-instrument-settings', raw.slice(0, 120));
     }
     return mergeSettings(fromAttr, explicitSettings || {});
   }

@@ -19,13 +19,36 @@ function escapeHTML(str = '') {
 }
 
 function escapeAttr(str = '') {
-  return String(str).replace(/"/g, '&quot;');
+  // Harden: also escape & and < so quote-breakout and entity-smuggling
+  // can't escape the double-quoted attribute context.
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
 }
 
 function el(tag, attrs = {}, ...children) {
   tag = String(tag).toLowerCase().trim();
 
   let html = `<${tag}`;
+
+  // AcroxaJS Phase 1: `key` is an identity prop, never a raw HTML attribute.
+  // Emitted as data-acrx-key so the client keyed reconciler can match the
+  // same logical node across re-renders. (No existing view passes key.)
+  let acrxKey = null;
+  if (attrs && typeof attrs === 'object' && attrs.key != null) {
+    acrxKey = attrs.key;
+    attrs = { ...attrs };
+    delete attrs.key;
+  }
+
+  const rcMod = _rcModule();
+  const rc = rcMod ? rcMod.current() : null;
+  const recAttrs = rc ? {} : null;
+  if (acrxKey != null) {
+    html += ` data-acrx-key="${escapeAttr(acrxKey)}"`;
+    if (recAttrs) recAttrs['data-acrx-key'] = String(acrxKey);
+  }
 
   // convert camelCase -> kebab-case
   const toKebab = str =>
@@ -58,22 +81,44 @@ function el(tag, attrs = {}, ...children) {
 
     if (value === true) {
       html += ` ${key}`;
+      if (recAttrs) recAttrs[key] = true;
     } else if (value != null && value !== false) {
       html += ` ${key}="${escapeAttr(value)}"`;
+      if (recAttrs && (typeof value === 'string' || typeof value === 'number')) {
+        recAttrs[key] = String(value);
+      }
     }
   }
 
   const isVoid = VOID_ELEMENTS.has(tag);
 
   if (isVoid) {
-    return html + ' />';
+    html += ' />';
+    _recordNode(rc, { tag, key: acrxKey, attrs: recAttrs, html });
+    return html;
   }
 
   html += '>';
 
-  // Children
+  // Children — trusted-HTML contract: plain strings are already-rendered
+  // markup (callers escape dynamic text via escapeHTML()/text()). raw()
+  // marks intentional HTML explicitly; arrays flatten; `false` (from
+  // `cond && el(...)`) renders nothing instead of the string "false".
   for (const child of children) {
-    if (child == null) continue;
+    if (child == null || child === false) continue;
+
+    if (Array.isArray(child)) {
+      for (const nested of child) {
+        if (nested == null || nested === false) continue;
+        if (nested && typeof nested === 'object' && nested.__acrxRaw === true) html += nested.html;
+        else html += (typeof nested === 'string' || typeof nested === 'number')
+          ? nested
+          : String(nested);
+      }
+      continue;
+    }
+
+    if (child && typeof child === 'object' && child.__acrxRaw === true) { html += child.html; continue; }
 
     html += (typeof child === 'string' || typeof child === 'number')
       ? child
@@ -81,6 +126,8 @@ function el(tag, attrs = {}, ...children) {
   }
 
   html += `</${tag}>`;
+
+  _recordNode(rc, { tag, key: acrxKey, attrs: recAttrs, html });
 
   return html;
 }
@@ -329,7 +376,7 @@ function IconDropdown({
     'div',
     {
       class: `IconDropdown dropdown ${extraClass}`.trim(),
-      id: id || `icon-dropdown-${Date.now()}`
+      id: id || `icon-dropdown-${stableId(label, items.length)}`
     },
 
     el(
@@ -969,6 +1016,153 @@ function Callout({ type = 'info', title, message } = {}) {
   );
 }
 
+// ─── Runtime identity / hydration metadata (opt-in, back-compat) ──────────────
+// Static el()/div()/... stay cheap strings. Only interactive nodes use el.h(),
+// which returns a String object carrying `__acrx` meta while remaining fully
+// concatenable with existing string code (template literals, join, el children
+// via String(child)). IDs are deterministic hashes — never random per render.
+function _hashId(str) {
+  let h1 = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h1 ^= str.charCodeAt(i);
+    h1 = Math.imul(h1, 0x01000193) >>> 0;
+  }
+  return `a${h1.toString(36)}`;
+}
+
+function stableId(...parts) {
+  return _hashId(parts.map((p) => String(p ?? "")).join("|"));
+}
+
+function hydrateAttrs(id, opts = {}) {
+  const out = { "data-acrx-id": id };
+  const hydrate = opts.hydrate || opts.strategy || null;
+  if (hydrate && hydrate !== "none") out["data-acrx-hydrate"] = hydrate;
+  if (opts.stateKey) out["data-acrx-state"] = String(opts.stateKey);
+  if (opts.owner) out["data-acrx-owner"] = String(opts.owner);
+  if (opts.component) out["data-acrx-component"] = String(opts.component);
+  return out;
+}
+
+function h(tag, attrs = {}, ...children) {
+  const a = { ...(attrs || {}) };
+  const meta = {
+    key: a.key ?? null,
+    hydrate: a.hydrate ?? a.strategy ?? null,
+    stateKey: a.stateKey ?? null,
+    owner: a.owner ?? null,
+    component: a.component ?? null,
+  };
+  delete a.key; delete a.hydrate; delete a.strategy;
+  delete a.stateKey; delete a.owner; delete a.component;
+  const needsId = meta.key != null || meta.hydrate || meta.stateKey || meta.component;
+  if (needsId) {
+    const id = typeof meta.key === "string" && meta.key ? meta.key
+      : stableId(tag, meta.key ?? "", meta.component ?? "", children.length);
+    Object.assign(a, hydrateAttrs(id, meta));
+    meta.id = id;
+  }
+  const html = el(tag, a, ...children);
+  const boxed = new String(html); // eslint-disable-line no-new-wrappers
+  boxed.__acrx = { tag, id: meta.id || null, ...meta };
+  return boxed;
+}
+
+el.h = h;
+
+/**
+ * Serializable render descriptor (AcroxaJS contract).
+ * Unlike h() boxed strings (whose __acrx meta is lost on concat),
+ * describe() returns plain JSON safe for transport/hydration manifests.
+ * Only scalar fields cross the boundary — never functions.
+ */
+function describe(tag, attrs = {}) {
+  const a = { ...(attrs || {}) };
+  const out = {
+    tag: String(tag),
+    id: null, key: a.key ?? null,
+    hydrate: a.hydrate ?? a.strategy ?? null,
+    stateKey: a.stateKey ?? null,
+    owner: a.owner ?? null,
+    component: a.component ?? null,
+  };
+  const needsId = out.key != null || out.hydrate || out.stateKey || out.component;
+  if (needsId) {
+    out.id = typeof out.key === "string" && out.key ? out.key
+      : stableId(tag, out.key ?? "", out.component ?? "", 0);
+  }
+  return out;
+}
+el.describe = describe;
+
+// ─── Explicit safe-HTML, text, and runtime boundary ─────────────────────
+// el() keeps its trusted-HTML contract (plain strings pass through so the
+// 20+ existing views don't double-escape). New code should be explicit:
+//   el('p', {}, text(userInput))        // escaped text
+//   el('div', {}, raw(trustedMarkup))   // intentional HTML
+//   boundary('widget', 'core', 'hero', { hydrate: 'visible' }, ...) // deterministic data-acrx-*
+function raw(html) {
+  return { __acrxRaw: true, html: String(html ?? '') };
+}
+
+function text(value) {
+  return escapeHTML(value);
+}
+
+function boundary(type, owner, key, opts = {}, ...children) {
+  let o = opts;
+  if (o == null) o = {};
+  else if (typeof o !== 'object' || Array.isArray(o) || o.__acrxRaw === true || o instanceof String) {
+    children = [o, ...children];
+    o = {};
+  }
+  let attrs = null;
+  try {
+    const ident = require('../../core/runtime/identity');
+    attrs = ident.targetAttrs(type, owner, key, {
+      hydrate: o.hydrate ?? o.strategy ?? null,
+      component: o.component ?? null,
+    });
+    if (o.rev != null) attrs['data-acrx-rev'] = String(o.rev);
+  } catch (_) {
+    const fallbackId = typeof key === 'string' && key ? key : stableId(type, owner, key);
+    attrs = hydrateAttrs(fallbackId, {
+      hydrate: o.hydrate ?? o.strategy ?? null,
+      component: o.component ?? null,
+      owner,
+    });
+  }
+  return el(o.tag || 'div', { ...attrs, ...(o.attrs || {}) }, ...children);
+}
+
+// ─── Render context bridge (AcroxaJS Phase 1) ──────────────────────────────
+// Lazily binds src/core/runtime/render/context so el() can record nodes and
+// views/components can record dependencies when a render context is active.
+// No context → zero behavior change (live pages stay on the cheap path).
+let _renderContext = null;
+function _rcModule() {
+  if (_renderContext === null) {
+    try {
+      _renderContext = require('../../core/runtime/render/context');
+    } catch (_) {
+      _renderContext = false;
+    }
+  }
+  return _renderContext || null;
+}
+
+function _recordNode(rc, node) {
+  if (!rc) return;
+  try { rc.recordNode(node); } catch (_) {}
+}
+
+/** Record a data/service dependency into the active render context. */
+function depend(...deps) {
+  const mod = _rcModule();
+  if (!mod) return false;
+  try { return mod.depend(...deps); } catch (_) { return false; }
+}
+
 // ─── Export new helpers ─────────────────────────────────────────────────────────
 module.exports = {
   // ... all previous exports
@@ -1054,4 +1248,14 @@ module.exports = {
   ColorPicker,
   DangerZone,
   Callout,
+
+  // Runtime identity / hydration (opt-in; el() contract unchanged)
+  stableId,
+  hydrateAttrs,
+  h,
+  describe,
+  raw,
+  text,
+  boundary,
+  depend,
 };

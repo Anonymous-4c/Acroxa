@@ -1537,6 +1537,67 @@ function PluginsPage(data = {}) {
 }
 
 
+// ─── AcroxaJS Runtime settings (Phase 9) ──────────────────────────────────────
+function RuntimeSettingsPage(data = {}) {
+  const r = data.runtime || {};
+
+  return PageWrapper({ className: 'acrx-dshb-wr settings-page' },
+    MainHeader({ title: 'AcroxaJS Runtime', actions: [{ icon: 'floppy-disk', class: 'btn ghost', dataClick: '#runtime-save-btn', title: 'Save' }] }),
+    MainContent(
+      el('div', { id: 'runtime-form', class: 'settings-form form-container' },
+
+        Callout({ type: 'info', title: 'AcroxaJS runtime', message: 'Cache strategies and runtime diagnostics. Core identity and protocol paths are fixed by AcroxaJS.' }),
+
+        Section({ title: 'Visitor Cache', icon: ['duotone','gauge-high'], description: 'Visitor output caching. Invalidation is dependency-driven and targeted.' },
+          Toggle({ id: 'cacheEnabled', label: 'Enable visitor cache', hint: 'Cache-first serving of rendered pages.', checked: r.cacheEnabled !== false }),
+          Field({ label: 'Cache Strategy' },
+            Dropdown({
+              id: 'cacheStrategy',
+              options: [
+                { value: 'cache-first', label: 'Cache First' },
+                { value: 'no-cache', label: 'No Cache (render fresh)' },
+                { value: 'revalidate', label: 'Revalidate (invalidation-driven)' },
+                { value: 'stale-while-revalidate', label: 'Stale While Revalidate' },
+                { value: 'invalidation-driven', label: 'Invalidation Driven (no TTL)' },
+              ],
+              value: r.cacheStrategy || 'cache-first'
+            })
+          ),
+          FieldGrid(
+            Field({ label: 'TTL (ms)', forId: 'cacheTTL', hint: 'Time-to-live for cached pages' },
+              NumberInput({ id: 'cacheTTL', value: r.cacheTTL ?? 60000, min: 0 })
+            ),
+            Field({ label: 'SWR Grace (ms)', forId: 'cacheSwrGraceMs', hint: 'Stale-while-revalidate window' },
+              NumberInput({ id: 'cacheSwrGraceMs', value: r.cacheSwrGraceMs ?? 30000, min: 0 })
+            ),
+            Field({ label: 'Max Entries', forId: 'cacheMaxSize', hint: 'Bounded cache size' },
+              NumberInput({ id: 'cacheMaxSize', value: r.cacheMaxSize ?? 200, min: 1 })
+            )
+          )
+        ),
+
+        Section({ title: 'Diagnostics', icon: ['duotone','wave-pulse'], description: 'Runtime inspector and patch logging.' },
+          Toggle({ id: 'inspector', label: 'Runtime inspector', hint: 'AcroxaJS knob diagnostics on admin pages.', checked: r.inspector !== false }),
+          Toggle({ id: 'patchLog', label: 'Patch logging', hint: 'Log patch operations to the log stream.', checked: r.patchLog !== false })
+        ),
+
+        Section({ title: 'Live Runtime', icon: ['duotone','gauge'], description: 'Real measured stage timings from the running AcroxaJS runtime.' },
+          el('div', { id: 'runtime-live-stats', class: 'runtime-live-stats' },
+            el('p', { class: 'text-muted' }, 'Loading live stats…')
+          ),
+          el('div', { class: 'inline-action mt-2 d-flex gap-2' },
+            el('button', { id: 'runtime-flush-btn', class: 'btn btn-secondary', type: 'button' },
+              Icon('rotate-right', 'solid'), el('span', {}, 'Flush Runtime Caches')
+            )
+          )
+        ),
+
+        SaveBar({ id: 'runtime-save-btn' })
+      )
+    )
+  );
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 module.exports = {
   SystemNavPage,
@@ -1555,6 +1616,7 @@ module.exports = {
   AdvancedSettingsPage,
   EmailSettingsPage,
   PluginsPage,
+  RuntimeSettingsPage,
   // Primitives
   Icon, Field, Section, FieldGrid, Toggle, NumberInput,
   Dropdown, SaveBar, Badge, Textarea, ColorPicker,
@@ -1798,6 +1860,21 @@ module.exports.meta = [
       "/acrx/assets/css/ad-ap.css"
     ],
     js: [],
+    layout: "full"
+  },
+
+  {
+    path: "/acrx/system/acrxjs",
+    render: "RuntimeSettingsPage",
+    title: "AcroxaJS Runtime - Acroxa",
+    css: [
+      "/acrx/assets/css/ad-st.css",
+      "/acrx/assets/css/ad-ap.css"
+    ],
+    js: [
+      "/acrx/assets/js/system/_shared.js",
+      "/acrx/assets/js/system/acrxjs-runtime.js"
+    ],
     layout: "full"
   }
 ];

@@ -41,15 +41,6 @@ el('div', { class: 'sec-wrap' },
 
           el('div', { class: 'filters d-flex' },
             CategoryFilter(),
-            // Uncomment when ready:
-            // CustomDropdown({
-            //   label: 'Status',
-            //   items: ['all','published','draft','trash'].map(s => ({
-            //     label: s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1),
-            //     value: s
-            //   })),
-            //   valueAttr: 'data-status'
-            // })
           ),
 
           PaginationControls()
@@ -81,3 +72,11 @@ module.exports.meta = [
     layout: "full"
   },
 ];
+
+
+2
+
+
+3
+
+

@@ -108,6 +108,28 @@ class LayoutEngine {
     }
     try {
       const resolved  = await this.resolve(req);
+
+      // AcroxaJS Phase 8: visitor output cache (live context only —
+      // preview/draft/customizer/virtual never cache). Hit → serve; miss →
+      // render → store → respond. Invalidation is dependency-driven
+      // (invalidateRoute) — never whole-cache nukes. X-Acroxa-Cache header
+      // for observability.
+      if (this.context === "live") {
+        try {
+          const layers = require("../../../core/runtime/cache/layers");
+          const vKey = layers.visitorKey(req);
+          const cached = layers.getVisitor(vKey);
+          if (typeof cached === "string" && cached) {
+            res.setHeader("X-Acroxa-Cache", "hit");
+            return res.send(cached);
+          }
+          const html = await this._renderAndCache(req, res, resolved, vKey);
+          if (html !== undefined) return html;
+        } catch (_) {
+          // Cache machinery failure must never break rendering — fall through.
+        }
+      }
+
       const loader    = new DataLoader({
         preview:     this.context === "preview" || this.context === "draft",
         draft:       this.context === "draft",
@@ -128,6 +150,39 @@ class LayoutEngine {
        console.error(`❌ [LayoutEngine:${this.context}] handle error:`, err);
       return res.status(500).send(this._errorHTML(err.message));
     }
+  }
+
+  /**
+   * Render + store (Phase 8). Sends the response. Returns undefined when
+   * it did NOT send (caller falls back to the plain path).
+   */
+  async _renderAndCache(req, res, resolved, cacheKey) {
+    if (!this._initialized) return undefined;
+    const loader    = new DataLoader({
+      preview:     this.context === "preview" || this.context === "draft",
+      draft:       this.context === "draft",
+      bypassCache: this.context !== "live",
+    });
+    let data = await loader.loadResolvedData(resolved);
+
+    if (data === null) {
+      resolved.type = "404"; resolved.template = "404";
+      data = { page_title: "Page Not Found" };
+    }
+
+    const renderCtx = await this.buildRenderContext(resolved, data);
+    const content   = this.render(resolved.template, renderCtx);
+    const html      = this.buildHTML(content, renderCtx);
+
+    if (cacheKey) {
+      try {
+        const layers = require("../../../core/runtime/cache/layers");
+        layers.putVisitor(cacheKey, html, { deps: [`route:${(req.originalUrl || req.url || "/").split("?")[0]}`] });
+      } catch (_) {}
+    }
+    res.setHeader("X-Acroxa-Cache", "miss");
+    res.send(html);
+    return html;
   }
 
   // ── VIRTUAL RENDER ─────────────────────────────────────────────────────────
@@ -315,9 +370,14 @@ class LayoutEngine {
   // ── TEMPLATE RENDER ────────────────────────────────────────────────────────
 
   render(templateKey, params) {
+    let p = params || {};
+    try { p = require("../../core/runtime/hookBus").run("render:beforeRender", p, { templateKey }) || p; } catch (_) {}
     const fallbacks = TEMPLATE_FALLBACKS[templateKey] || [templateKey, "404"];
     for (const key of fallbacks) {
-      if (this.layouts[key]) return this.layouts[key](params);
+      if (this.layouts[key]) {
+        const html = this.layouts[key](p);
+        try { return require("../../core/runtime/hookBus").run("render:afterRender", html, { templateKey: key }) || html; } catch (_) { return html; }
+      }
     }
      console.error(`❌ No template found for: ${templateKey} (tried: ${fallbacks.join(", ")})`);
     return "<h1>Template not found</h1>";
@@ -359,6 +419,30 @@ class LayoutEngine {
     const pageCustomCSS = params.landing?.customCSS || params.page?.customCSS || "";
     const pageCustomJS  = params.landing?.customJS  || "";
 
+    // ── Editor responsive overrides (P1-13 server half) ───────────────────
+    // dataLoader derives per-breakpoint CSS from the blueprint; templates
+    // rendering stored HTML carry no style tag of their own, so the rules
+    // ship here in <head>.
+    const responsiveCss = params.editorResponsiveCss || "";
+
+    // ── Widget hydration runtime (tabs switching; inert without widgets) ──
+    const hydrationScript = this._buildWidgetHydrationScript();
+
+    // ── Visitor analytics (live public pages only) ───────────────────────
+    // Previews, drafts, customizer and admin pages never load the runtime,
+    // so author activity is never tracked as visitor activity.
+    const analyticsScript = this.context === "live" ? this._buildAnalyticsScript(params) : "";
+
+    // ── AcroxaJS visitor runtime (live only): SSE invalidation + targeted patch.
+    // Slim, deferred, no admin/editor code. Previews/drafts stay deterministic.
+    // Versioned by runtime rev so deploys bust stale browser cache.
+    let runtimeScript = "";
+    if (this.context === "live") {
+      let v = "";
+      try { v = require("../../core/runtime/cache").versionTag({ rev: require("../../core/runtime/revision").get() }); } catch (_) {}
+      runtimeScript = `<script src="/assets/acroxa-runtime.js${v}" defer></script>`;
+    }
+
     // ── OG Meta Tags (from SEO settings + per-page overrides) ────────────
     const ogTags = this._buildOGTags(params);
 
@@ -379,12 +463,16 @@ class LayoutEngine {
     ${trackingHead}
     ${gaScript}
     ${cssVars ? `<style id="layout-css-vars">${cssVars}</style>` : ""}
+    ${responsiveCss ? `<style data-acroxa-responsive>${responsiveCss}</style>` : ""}
     ${pageCustomCSS ? `<style>${pageCustomCSS}</style>` : ""}
 </head>
 <body>
     ${trackingBody}
     ${content}
     ${bodyAssets}
+    ${hydrationScript}
+    ${runtimeScript}
+    ${analyticsScript}
     ${pageCustomJS ? `<script>${pageCustomJS}</script>` : ""}
 </body>
 </html>`;
@@ -523,6 +611,32 @@ class LayoutEngine {
     }
   }
 
+  // ── Visitor analytics script tag ───────────────────────────────────────
+  // Live public pages only (see buildHTML gate). Carries endpoint + optional
+  // post/page context for content attribution; consent mode and kill-switch
+  // come from /acr/api/analytics/config at runtime. Never any secrets.
+  _buildAnalyticsScript(params = {}) {
+    const doc = params.post || params.page || {};
+    const bootstrap = {
+      endpoint: "/acr/api/analytics/collect",
+      postId: doc.id != null ? String(doc.id).slice(0, 64) : null,
+      postSlug: doc.slug != null ? String(doc.slug).slice(0, 256) : null,
+    };
+    const json = JSON.stringify(bootstrap).replace(/</g, "<\\/");
+    return `<script>window.__ACRX_ANALYTICS__=${json};</script>\n    <script src="/assets/analytics.js" async defer></script>`;
+  }
+
+  // ── Widget hydration runtime ───────────────────────────────────────────
+  // Single source of truth lives in ./hydration-snippet.js (shared with tests).
+  // Delegated, dependency-free, inert when no widgets are present.
+  _buildWidgetHydrationScript() {
+    try {
+      return require("./hydration-snippet").widgetHydrationScript();
+    } catch (_) {
+      return "";
+    }
+  }
+
   // ── Build GA Tracking Script from analytics settings ──────────────────
   _buildGATracking(params) {
     try {
@@ -585,8 +699,22 @@ class LayoutEngine {
   injectAssets() {
     if (!this.acrx) return;
 
-    // Use a timestamp so the browser always fetches fresh files after reload
-    const v = `?v=${Date.now()}`;
+    // Asset fingerprint: content-hash in production (long cache, new URL on
+    // change), mtime/nonce in development (always fresh). Never disable
+    // caching globally to dodge staleness (spec §47).
+    let v = "";
+    try {
+      const { versionTag } = require("../../core/runtime/cache");
+      v = versionTag({
+        stylesheets: this.meta?.stylesheets || [],
+        scripts: this.meta?.scripts || [],
+        customStyles: this.meta?.customStyles || "",
+        customScripts: this.meta?.customScripts || "",
+        layout: this.layoutName,
+      });
+    } catch (_) {
+      v = `?v=${Date.now()}`;
+    }
 
     (this.meta?.stylesheets || []).forEach(url => {
       this.acrx.injectPublicAsset?.({
@@ -624,7 +752,19 @@ class LayoutEngine {
   }
 
   _prepareIsolatedAssets() {
-    const v = `?v=${Date.now()}`;
+    let v = "";
+    try {
+      const { versionTag } = require("../../core/runtime/cache");
+      v = versionTag({
+        stylesheets: this.meta?.stylesheets || [],
+        scripts: this.meta?.scripts || [],
+        customStyles: this.meta?.customStyles || "",
+        customScripts: this.meta?.customScripts || "",
+        layout: this.layoutName,
+      });
+    } catch (_) {
+      v = `?v=${Date.now()}`;
+    }
     this._isolatedAssets = [];
 
     (this.meta?.stylesheets || []).forEach(url => {

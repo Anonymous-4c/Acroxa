@@ -1,0 +1,668 @@
+/* ============================================================
+   profile.css — /acrx/profile — Bento Grid Profile Layout
+   ============================================================ */
+
+.acrx-profile-wr .dshb-content {
+  padding: var(--space-6, 1.5rem);
+}
+
+/* ── Bento Grid ──────────────────────────────────────────────── */
+
+.pf-bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: auto;
+  gap: var(--space-3, .75rem);
+}
+
+.pf-bento-card {
+  background: var(--color-primary-200);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-xl, 20px);
+  padding: 1.25rem;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.pf-bento-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 60%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.pf-bento-card:hover::before {
+  opacity: 1;
+}
+
+.pf-bento-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--color-primary-300));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
+}
+
+/* ── Card Header ─────────────────────────────────────────────── */
+
+.pf-card-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+}
+
+.pf-card-header i {
+  font-size: .85rem;
+  color: var(--accent);
+}
+
+.pf-history-count {
+  margin-left: auto;
+  font-size: .68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--color-primary-300);
+  padding: .15rem .5rem;
+  border-radius: 20px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Profile Card (spans 2 cols) ─────────────────────────────── */
+
+.pf-card-profile {
+  grid-column: span 2;
+}
+
+.pf-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.pf-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pf-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--color-primary-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-color);
+  overflow: hidden;
+  border: 3px solid var(--color-primary-200);
+}
+
+.pf-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pf-avatar--initials.role-admin     { background: var(--accent-700); color: #fff; }
+.pf-avatar--initials.role-editor    { background: color-mix(in srgb, var(--color-info) 40%, var(--color-primary-800)); }
+.pf-avatar--initials.role-author    { background: color-mix(in srgb, var(--color-success) 40%, var(--color-primary-800)); }
+.pf-avatar--initials.role-seo       { background: color-mix(in srgb, var(--color-warning) 40%, var(--color-primary-800)); }
+.pf-avatar--initials.role-designer  { background: color-mix(in srgb, #be185d 40%, var(--color-primary-800)); }
+.pf-avatar--initials.role-developer { background: color-mix(in srgb, var(--accent) 40%, var(--color-primary-800)); }
+.pf-avatar--initials.role-user      { background: var(--color-primary-700); }
+
+.pf-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary-200);
+  background: var(--color-neutral);
+  transition: background .3s;
+}
+
+.pf-online-dot.is-online {
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 25%, transparent);
+  animation: pf-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pf-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 25%, transparent); }
+  50%      { box-shadow: 0 0 0 6px transparent; }
+}
+
+.pf-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-name {
+  margin: 0 0 .35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.pf-profile-meta {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin-bottom: .35rem;
+}
+
+.pf-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: var(--radius-sm, 5px);
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.pf-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: var(--radius-2xl, 20px);
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.pf-status--online  { background: var(--color-success-bg); color: var(--color-success); }
+.pf-status--offline { background: var(--color-neutral-bg); color: var(--color-neutral); }
+
+.pf-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pf-status--online .pf-status-dot { background: var(--color-success); }
+.pf-status--offline .pf-status-dot { background: var(--color-neutral); }
+
+.pf-sv-badge {
+  display: inline-flex;
+  padding: .15rem .4rem;
+  font-size: .62rem;
+  font-family: monospace;
+  font-weight: 600;
+  border-radius: 4px;
+  background: var(--color-primary-300);
+  color: var(--text-muted);
+}
+
+.pf-email {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
+.pf-username {
+  margin: .15rem 0 0;
+  font-size: .72rem;
+  color: var(--text-muted);
+}
+
+/* ── Status Card ─────────────────────────────────────────────── */
+
+.pf-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+
+.pf-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
+.pf-stat-label {
+  font-size: .68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pf-stat-value {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-val--online { color: var(--color-success); }
+.pf-val--mono { font-family: var(--font-mono, monospace); font-size: .75rem; }
+
+/* ── SVG Rings ───────────────────────────────────────────────── */
+
+.pf-rings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.pf-ring-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pf-ring-wrap svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.pf-ring-svg {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.pf-ring-progress {
+  transition: stroke-dashoffset 1.2s cubic-bezier(.4, 0, .2, 1);
+}
+
+.pf-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-ring-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.pf-ring-text {
+  font-size: .6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-top: .15rem;
+}
+
+/* ── Stats List ──────────────────────────────────────────────── */
+
+.pf-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.pf-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .4rem 0;
+  border-bottom: 1px solid var(--color-primary-300);
+}
+
+.pf-stats-row:last-child { border-bottom: none; }
+
+.pf-stats-label {
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+
+.pf-stats-value {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Account Info ────────────────────────────────────────────── */
+
+.pf-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.pf-info-item {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  padding: .3rem 0;
+}
+
+.pf-info-label {
+  font-size: .75rem;
+  color: var(--text-muted);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.pf-info-value {
+  font-size: .82rem;
+  color: var(--text-color);
+}
+
+/* ── Timeline ────────────────────────────────────────────────── */
+
+.pf-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: .5rem;
+}
+
+.pf-timeline::-webkit-scrollbar { width: 4px; }
+.pf-timeline::-webkit-scrollbar-track { background: transparent; }
+.pf-timeline::-webkit-scrollbar-thumb { background: var(--color-primary-400); border-radius: 4px; }
+
+.pf-timeline-item {
+  display: flex;
+  gap: .75rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--color-primary-300);
+  position: relative;
+}
+
+.pf-timeline-item:last-child { border-bottom: none; }
+
+.pf-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: .35rem;
+  position: relative;
+}
+
+.pf-timeline-item:not(:last-child) .pf-timeline-dot::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: calc(100% + .55rem);
+  background: var(--color-primary-300);
+}
+
+.pf-timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-timeline-page {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .68rem;
+  color: var(--text-muted);
+  margin-top: .1rem;
+}
+
+.pf-timeline-dur {
+  background: var(--color-primary-300);
+  padding: .1rem .35rem;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-empty {
+  display: flex;
+  flex-direction: column;
+  align_items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: .4rem;
+  color: var(--text-muted);
+}
+
+.pf-empty i { font-size: 1.5rem; opacity: .3; }
+.pf-empty p { font-size: .82rem; margin: 0; }
+
+/* ── Form Styles ─────────────────────────────────────────────── */
+
+.pf-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  margin-bottom: 1rem;
+}
+
+.pf-form-group label {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pf-form-group input,
+.pf-form-group select,
+.pf-form-group textarea {
+  width: 100%;
+  padding: .55rem .75rem;
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary-300);
+  color: var(--text-color);
+  font-size: .85rem;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
+}
+
+.pf-form-group input:focus,
+.pf-form-group select:focus,
+.pf-form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.pf-form-group input:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: var(--color-primary-200);
+}
+
+.pf-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.pf-field-hint {
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.pf-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-primary-300);
+}
+
+.pf-card-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+}
+
+.pf-card-header i {
+  font-size: .85rem;
+  color: var(--accent);
+}
+
+/* ── Card Span Variants for Edit User ───────────────────────── */
+
+.pf-card-profile     { grid-column: span 2; }
+.pf-card-account     { grid-column: span 2; }
+.pf-card-profile-info { grid-column: span 2; }
+.pf-card-social      { grid-column: span 1; }
+.pf-card-skills      { grid-column: span 1; }
+.pf-card-actions     { grid-column: span 2; }
+
+/* ── Responsive for Edit Forms ──────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .pf-card-profile,
+  .pf-card-account,
+  .pf-card-profile-info,
+  .pf-card-actions { grid-column: span 2; }
+  .pf-card-social,
+  .pf-card-skills    { grid-column: span 1; }
+}
+
+@media (max-width: 640px) {
+  .pf-card-profile,
+  .pf-card-account,
+  .pf-card-profile-info,
+  .pf-card-social,
+  .pf-card-skills,
+  .pf-card-actions { grid-column: span 1; }
+  .pf-form-actions { flex-direction: column-reverse; }
+  .pf-form-actions .btn { width: 100%; }
+}
+
+/* ── Pages Grid ──────────────────────────────────────────────── */
+
+.pf-pages-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.pf-page-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .3rem .6rem;
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--color-primary-300);
+  border-radius: 20px;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .15s, background .15s;
+}
+
+.pf-page-chip:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--color-primary-300));
+}
+
+/* ── Card Span Variants ──────────────────────────────────────── */
+
+.pf-card-profile       { grid-column: span 2; }
+.pf-card-status        { grid-column: span 1; }
+.pf-card-ring          { grid-column: span 1; }
+.pf-card-stats         { grid-column: span 1; }
+.pf-card-account       { grid-column: span 1; }
+.pf-card-session       { grid-column: span 1; }
+.pf-card-history       { grid-column: span 2; }
+.pf-card-pages         { grid-column: span 2; }
+
+/* Edit User specific */
+.pf-card-profile-info  { grid-column: span 2; }
+.pf-card-social        { grid-column: span 1; }
+.pf-card-skills        { grid-column: span 1; }
+.pf-card-actions       { grid-column: span 2; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .pf-bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pf-card-profile       { grid-column: span 2; }
+  .pf-card-profile-info  { grid-column: span 2; }
+  .pf-card-history       { grid-column: span 2; }
+  .pf-card-pages         { grid-column: span 2; }
+  .pf-card-account       { grid-column: span 2; }
+  .pf-card-actions       { grid-column: span 2; }
+}
+
+@media (max-width: 900px) {
+  .pf-bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pf-card-profile       { grid-column: span 2; }
+  .pf-card-profile-info  { grid-column: span 2; }
+  .pf-card-ring          { grid-column: span 2; }
+  .pf-card-stats         { grid-column: span 1; }
+  .pf-card-account       { grid-column: span 1; }
+  .pf-card-session       { grid-column: span 2; }
+  .pf-card-social        { grid-column: span 1; }
+  .pf-card-skills        { grid-column: span 1; }
+  .pf-rings-row { flex-wrap: wrap; justify-content: center; gap: .75rem; }
+}
+
+@media (max-width: 640px) {
+  .pf-bento {
+    grid-template-columns: 1fr;
+  }
+  .pf-card-profile,
+  .pf-card-status,
+  .pf-card-ring,
+  .pf-card-stats,
+  .pf-card-account,
+  .pf-card-session,
+  .pf-card-history,
+  .pf-card-pages { grid-column: span 1; }
+
+  .pf-profile-row { flex-direction: column; text-align: center; }
+  .pf-profile-meta { justify-content: center; }
+  .pf-rings-row { flex-wrap: wrap; justify-content: center; }
+}

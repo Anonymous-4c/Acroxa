@@ -1,4 +1,4 @@
-// src/views/users.js  — v2 (table approach + session data)
+// src/views/users.js — v4 Complete Bento UI with SSE realtime
 'use strict';
 
 const {
@@ -10,13 +10,11 @@ const {
   Input,
   PaginationControls,
   CustomDropdown,
-  MetricCard,
 } = require('./lib/framework');
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
-
 function relativeTime(date) {
-  if (!date) return null;
+  if (!date) return 'Never';
   const diff = Date.now() - new Date(date).getTime();
   const mins  = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
@@ -37,123 +35,133 @@ function loginRecencyClass(date) {
   return 'recency-old';
 }
 
-// ─── Intelligence Widgets ─────────────────────────────────────────────────────
-
-function computeStats(users = [], meta = {}) {
-  const total      = meta.total || users.length;
-  const active     = users.filter(u => !u.isSuspended && u.isActive).length;
-  const suspended  = users.filter(u => u.isSuspended).length;
-  const sevenDays  = Date.now() - 7 * 86400000;
-  const newUsers   = users.filter(u => new Date(u.createdAt || 0) > sevenDays).length;
-
-  const roles = {};
-  users.forEach(u => { roles[u.role] = (roles[u.role] || 0) + 1; });
-
-  const recentLogin = users.filter(u => {
-    if (!u.lastLogin) return false;
-    return (Date.now() - new Date(u.lastLogin).getTime()) < 86400000;
-  }).length;
-
-  return { total, active, suspended, newUsers, roles, recentLogin };
+function formatDuration(ms) {
+  if (!ms) return '0m';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-function RoleDistributionBar(roles = {}) {
-  const order = ['admin','editor','author','designer','developer','seo','user'];
-  const total  = Object.values(roles).reduce((s, n) => s + n, 0) || 1;
+// ─── SVG Ring Widget (stroke-dasharray) ──────────────────────────────
+function SVGRing({ id, value, max, label, size = 80, stroke = 6, color = 'var(--accent)' }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = max > 0 ? Math.min(value / max, 1) : 0;
+  const dashoffset = circumference * (1 - pct);
 
-  const segments = order
-    .filter(r => roles[r])
-    .map(r => el('div', {
-      class: `rd-seg role-${r}`,
-      style: `width:${Math.max(4, (roles[r] / total) * 100).toFixed(1)}%`,
-      title: `${r}: ${roles[r]}`
-    }));
-
-  const legend = order
-    .filter(r => roles[r])
-    .map(r => el('span', { class: `rd-leg-item role-${r}` },
-      el('i'),
-      ` ${r} `,
-      el('b', {}, roles[r])
-    ));
-
-  return el('div', { class: 'u-widget u-widget--roles' },
-    el('div', { class: 'u-widget-label' },
-      icon('users-viewfinder', 'duotone'), ' Role Distribution'
+  return el('div', { class: 'u-ring-widget', id },
+    el('svg', { width: size, height: size, viewBox: `0 0 ${size} ${size}`, class: 'u-ring-svg' },
+      el('circle', {
+        cx: size / 2, cy: size / 2, r: radius,
+        fill: 'none', stroke: 'var(--color-primary-300)', 'stroke-width': stroke
+      }),
+      el('circle', {
+        cx: size / 2, cy: size / 2, r: radius,
+        fill: 'none', stroke: color, 'stroke-width': stroke,
+        'stroke-linecap': 'round',
+        'stroke-dasharray': circumference,
+        'stroke-dashoffset': dashoffset,
+        class: 'u-ring-progress',
+        'data-circumference': circumference,
+        'data-target': dashoffset
+      })
     ),
-    el('div', { class: 'rd-bar' }, ...segments),
-    el('div', { class: 'rd-legend' }, ...legend)
+    el('div', { class: 'u-ring-center' },
+      el('span', { class: 'u-ring-val', 'data-ring-value': id }, String(value)),
+      el('span', { class: 'u-ring-lbl' }, label)
+    )
   );
 }
 
-function LoginActivityWidget(recentLogin = 0, total = 0) {
-  const pct = total ? Math.round((recentLogin / total) * 100) : 0;
-  const ring = Math.max(4, pct);
+// ─── Bento Stats Widgets ─────────────────────────────────────────────
+function BentoStats(users, meta, activityStats) {
+  const total     = meta.total || users.length;
+  const active    = users.filter(u => !u.isSuspended && u.isActive).length;
+  const suspended = users.filter(u => u.isSuspended).length;
+  const onlineNow = activityStats?.onlineNow || 0;
+  const activeToday = activityStats?.activeToday || 0;
+  const totalActions = activityStats?.totalActions || 0;
 
-  return el('div', { class: 'u-widget u-widget--activity' },
-    el('div', { class: 'u-widget-label' },
-      icon('signal', 'duotone'), ' Login Activity (24h)'
-    ),
-    el('div', { class: 'u-act-wrap' },
-      el('div', { class: 'u-act-ring', style: `--pct:${ring}` },
-        el('span', { class: 'u-act-num' }, recentLogin),
-        el('span', { class: 'u-act-sub' }, 'active')
+  return el('div', { class: 'u-bento-stats' },
+    // Row 1: Metric cards
+    el('div', { class: 'u-bento-metrics' },
+      el('div', { class: 'u-bento-card u-bento-card--accent' },
+        el('div', { class: 'u-bento-card-icon' }, el('i', { class: 'fa-solid fa-users' })),
+        el('div', { class: 'u-bento-card-data' },
+          el('span', { class: 'u-bento-val', id: 'bento-total' }, String(total)),
+          el('span', { class: 'u-bento-label' }, 'Total Users')
+        ),
+        el('span', { class: 'u-bento-change steady' }, `${meta.pages || 1} page${meta.pages !== 1 ? 's' : ''}`)
       ),
-      el('div', { class: 'u-act-meta' },
-        el('p', {}, el('b', {}, recentLogin), ` of ${total} users logged in today`),
-        el('p', { class: 'u-act-pct' }, `${pct}% engagement rate`)
+      el('div', { class: 'u-bento-card u-bento-card--green' },
+        el('div', { class: 'u-bento-card-icon' }, el('i', { class: 'fa-solid fa-circle-check' })),
+        el('div', { class: 'u-bento-card-data' },
+          el('span', { class: 'u-bento-val', id: 'bento-active' }, String(active)),
+          el('span', { class: 'u-bento-label' }, 'Active')
+        ),
+        el('span', { class: 'u-bento-change up' }, total ? `${Math.round((active / total) * 100)}%` : '—')
+      ),
+      el('div', { class: 'u-bento-card u-bento-card--red' },
+        el('div', { class: 'u-bento-card-icon' }, el('i', { class: 'fa-solid fa-ban' })),
+        el('div', { class: 'u-bento-card-data' },
+          el('span', { class: 'u-bento-val', id: 'bento-suspended' }, String(suspended)),
+          el('span', { class: 'u-bento-label' }, 'Suspended')
+        ),
+        el('span', { class: 'u-bento-change' }, suspended > 0 ? 'review' : 'clear')
+      ),
+      el('div', { class: 'u-bento-card u-bento-card--online' },
+        el('div', { class: 'u-bento-card-icon u-pulse-icon' }, el('i', { class: 'fa-solid fa-signal' })),
+        el('div', { class: 'u-bento-card-data' },
+          el('span', { class: 'u-bento-val u-val-live', id: 'bento-online' }, String(onlineNow)),
+          el('span', { class: 'u-bento-label' }, 'Online Now')
+        ),
+        el('span', { class: 'u-bento-change up' }, 'live')
+      )
+    ),
+
+    // Row 2: SVG rings + Live panel
+    el('div', { class: 'u-bento-intel' },
+      // Rings card
+      el('div', { class: 'u-bento-card u-bento-card--rings' },
+        el('div', { class: 'u-bento-card-header' },
+          el('i', { class: 'fa-solid fa-chart-pie' }),
+          el('span', {}, 'Activity Breakdown')
+        ),
+        el('div', { class: 'u-rings-grid' },
+          SVGRing({ id: 'ring-online', value: onlineNow, max: Math.max(total, 1), label: 'Online', color: 'var(--color-success)' }),
+          SVGRing({ id: 'ring-today', value: activeToday, max: Math.max(total, 1), label: 'Today', color: 'var(--accent)' }),
+          SVGRing({ id: 'ring-actions', value: totalActions, max: Math.max(totalActions, 10), label: 'Actions', color: 'var(--color-info)' }),
+          SVGRing({ id: 'ring-time', value: Math.round(activityStats?.avgTimeOnline / 60000) || 0, max: 480, label: 'Min Online', color: 'var(--accent-300)' })
+        )
+      ),
+
+      // Live Online Users Panel
+      el('div', { class: 'u-bento-card u-bento-card--live', id: 'live-panel' },
+        el('div', { class: 'u-bento-card-header' },
+          el('i', { class: 'fa-solid fa-bolt' }),
+          el('span', {}, 'Live Users'),
+          el('span', { class: 'u-live-count', id: 'live-count' }, String(onlineNow))
+        ),
+        el('div', { class: 'u-live-list', id: 'live-list' },
+          el('div', { class: 'u-live-empty' }, 'Scanning...')
+        )
+      ),
+
+      // Top Pages
+      el('div', { class: 'u-bento-card u-bento-card--pages' },
+        el('div', { class: 'u-bento-card-header' },
+          el('i', { class: 'fa-solid fa-fire' }),
+          el('span', {}, 'Top Pages')
+        ),
+        el('div', { class: 'u-top-pages', id: 'top-pages' },
+          el('div', { class: 'u-live-empty' }, 'Loading...')
+        )
       )
     )
   );
 }
 
-function DashboardWidgets(users, meta) {
-  const s = computeStats(users, meta);
-
-  const metrics = [
-    {
-      icon: 'users',
-      title: 'Total Users',
-      value: s.total,
-      change: `${meta.pages || 1} page${meta.pages !== 1 ? 's' : ''}`,
-      changeType: 'steady'
-    },
-    {
-      icon: 'circle-check',
-      title: 'Active',
-      value: s.active,
-      change: s.total ? `${Math.round((s.active / s.total) * 100)}%` : '—',
-      changeType: 'up'
-    },
-    {
-      icon: 'ban',
-      title: 'Suspended',
-      value: s.suspended,
-      change: s.suspended > 0 ? 'needs review' : 'all clear',
-      changeType: s.suspended > 0 ? 'down' : 'steady'
-    },
-    {
-      icon: 'user-plus',
-      title: 'New (7d)',
-      value: s.newUsers,
-      change: 'this week',
-      changeType: s.newUsers > 0 ? 'up' : 'steady'
-    },
-  ];
-
-  return el('div', { class: 'u-dash-widgets' },
-    el('div', { class: 'u-metrics-row' },
-      ...metrics.map(MetricCard)
-    ),
-    el('div', { class: 'u-intel-row' },
-      RoleDistributionBar(s.roles),
-      LoginActivityWidget(s.recentLogin, s.total)
-    )
-  );
-}
-
-// ─── Role Badge ───────────────────────────────────────────────────────────────
-
+// ─── Role Badge ───────────────────────────────────────────────────────
 function RoleBadge(role) {
   const icons = {
     admin: 'shield-halved', editor: 'pen-nib', author: 'feather',
@@ -164,46 +172,25 @@ function RoleBadge(role) {
   );
 }
 
-// ─── Status Pill ──────────────────────────────────────────────────────────────
-
+// ─── Status Pill ──────────────────────────────────────────────────────
 function StatusPill(user) {
-  if (user.isSuspended) {
-    return el('span', { class: 'u-status suspended' },
-      el('i', { class: 'u-status-dot' }), 'Suspended'
-    );
-  }
-  if (!user.isActive) {
-    return el('span', { class: 'u-status inactive' },
-      el('i', { class: 'u-status-dot' }), 'Inactive'
-    );
-  }
-  return el('span', { class: 'u-status active' },
-    el('i', { class: 'u-status-dot' }), 'Active'
-  );
+  if (user.isSuspended) return el('span', { class: 'u-status suspended' }, el('i', { class: 'u-status-dot' }), 'Suspended');
+  if (!user.isActive)   return el('span', { class: 'u-status inactive' }, el('i', { class: 'u-status-dot' }), 'Inactive');
+  return el('span', { class: 'u-status active' }, el('i', { class: 'u-status-dot' }), 'Active');
 }
 
-// ─── Avatar Cell ─────────────────────────────────────────────────────────────
-
+// ─── Avatar Cell ─────────────────────────────────────────────────────
 function AvatarCell(user) {
   const initials = (user.fullName || user.username || '?')
     .split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
-
   const recency = loginRecencyClass(user.lastLogin);
-
   const avatarEl = user.avatar
-    ? el('div', { class: `u-avatar ${recency}` },
-        el('img', { src: user.avatar, alt: user.username, loading: 'lazy' })
-      )
+    ? el('div', { class: `u-avatar ${recency}` }, el('img', { src: user.avatar, alt: user.username, loading: 'lazy' }))
     : el('div', { class: `u-avatar u-avatar--initials role-${user.role} ${recency}` }, initials);
-
-  return el('div', { class: 'u-avatar-wrap' },
-    avatarEl,
-    el('i', { class: `u-pulse ${recency}` })
-  );
+  return el('div', { class: 'u-avatar-wrap' }, avatarEl, el('i', { class: `u-pulse ${recency}` }));
 }
 
-// ─── Session Version Indicator ────────────────────────────────────────────────
-
+// ─── Session Version Badge ────────────────────────────────────────────
 function SessionBadge(user) {
   const sv = user.sessionVersion || 1;
   return el('span', {
@@ -212,8 +199,7 @@ function SessionBadge(user) {
   }, `sv${sv}`);
 }
 
-// ─── Row Actions ─────────────────────────────────────────────────────────────
-
+// ─── Row Actions ─────────────────────────────────────────────────────
 function RowActions(user) {
   const uid = user.id || user._id;
   return el('div', { class: 'u-row-actions' },
@@ -230,87 +216,78 @@ function RowActions(user) {
   );
 }
 
-// ─── Single User Row (enriched) ───────────────────────────────────────────────
-
-function UserRow(user, sessionUser) {
-  const uid        = user.id || user._id;
-  const relLogin   = relativeTime(user.lastLogin);
-  const absLogin   = user.lastLogin
+// ─── User Row ────────────────────────────────────────────────────────
+function UserRow(user, sessionUser, activity) {
+  const uid = user.id || user._id;
+  const relLogin = relativeTime(user.lastLogin);
+  const absLogin = user.lastLogin
     ? new Date(user.lastLogin).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     : 'Never logged in';
+  const roleIcon = { admin: 'shield-halved', editor: 'pen-nib', author: 'feather', seo: 'magnifying-glass-chart', designer: 'paintbrush', developer: 'code', user: 'user' }[user.role] || 'user';
   const stateClass = user.isSuspended ? 'is-suspended' : !user.isActive ? 'is-inactive' : '';
-  const isSelf     = sessionUser && (uid === sessionUser.userId || uid === sessionUser.userId?.toString());
-  const selfClass  = isSelf ? ' u-row--self' : '';
+  const isSelf = sessionUser && (uid === sessionUser.userId || uid === sessionUser.userId?.toString());
+  const selfClass = isSelf ? ' u-row--self' : '';
+
+  const act = activity || {};
+  const activePage = act.activePage || '—';
+  const isActiveNow = act.isActive && act.lastSeen && (Date.now() - new Date(act.lastSeen).getTime()) < 5 * 60 * 1000;
+  const lastSeenRel = act.lastSeen ? relativeTime(act.lastSeen) : '—';
+  const lastSeenAbs = act.lastSeen ? new Date(act.lastSeen).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+  const activityIp = act.ip || '—';
 
   return el('label', { class: `u-row ${stateClass}${selfClass}`, 'data-id': uid, ...(isSelf ? { 'data-self': 'true' } : {}) },
-
     el('input', { type: 'checkbox', class: 'u-row-select', 'data-id': uid, value: uid, ...(isSelf ? { disabled: true } : {}) }),
-
     el('div', { class: 'u-row-inner' },
       el('div', { class: 'u-sel-strip' }),
       el('div', { class: 'u-col u-col-avatar' }, AvatarCell(user)),
-
       el('div', { class: 'u-col u-col-identity' },
         el('div', { class: 'u-identity-main' },
           el('span', { class: 'u-username' }, user.username),
           isSelf ? el('span', { class: 'u-self-badge' }, 'You') : null,
           SessionBadge(user)
         ),
-        user.fullName
-          ? el('span', { class: 'u-fullname' }, user.fullName)
-          : el('span', { class: 'u-fullname u-fullname--empty' }, '—'),
+        user.fullName ? el('span', { class: 'u-fullname' }, user.fullName) : el('span', { class: 'u-fullname u-fullname--empty' }, '—'),
         el('span', { class: 'u-email-compact' }, user.email)
       ),
-
-      el('div', { class: 'u-col u-col-email' },
-        el('span', { class: 'u-email' }, user.email)
-      ),
-
-      el('div', { class: 'u-col u-col-role' },
-        RoleBadge(user.role)
-      ),
-
-      el('div', { class: 'u-col u-col-status' },
-        StatusPill(user)
-      ),
-
+      el('div', { class: 'u-col u-col-email' }, el('span', { class: 'u-email' }, user.email)),
+      el('div', { class: 'u-col u-col-role' }, RoleBadge(user.role)),
+      el('div', { class: 'u-col u-col-status' }, StatusPill(user)),
       el('div', { class: 'u-col u-col-login' },
-        el('span', {
-          class: `u-last-login ${loginRecencyClass(user.lastLogin)}`,
-          title: absLogin
-        }, relLogin || '—')
+        el('span', { class: `u-last-login ${loginRecencyClass(user.lastLogin)}`, title: absLogin }, relLogin || '—')
       ),
-
+      el('div', { class: 'u-col u-col-activity' },
+        el('div', { class: 'u-activity-cell' },
+          el('span', { class: `u-active-indicator ${isActiveNow ? 'is-online' : ''}`, title: isActiveNow ? `Active on ${activePage}` : `Last seen: ${lastSeenAbs}` }, isActiveNow ? '●' : '○'),
+          el('span', { class: 'u-active-page', title: activePage }, activePage),
+          el('span', { class: 'u-last-seen-time', title: lastSeenAbs }, lastSeenRel)
+        )
+      ),
+      el('div', { class: 'u-col u-col-ip' }, el('span', { class: 'u-ip-addr', title: activityIp }, activityIp)),
       el('div', { class: 'u-col u-col-actions' }, RowActions(user))
     )
   );
 }
 
-// ─── Table Header ─────────────────────────────────────────────────────────────
-
+// ─── Table Header ─────────────────────────────────────────────────────
 function TableHeader() {
   return el('div', { class: 'u-table-head' },
     el('div', { class: 'u-th-sel-strip' }),
     el('label', { class: 'u-select-all-wrap', title: 'Select all visible' },
       el('input', { type: 'checkbox', id: 'select-all-users', class: 'u-select-all' }),
-      el('span', { class: 'u-select-all-icon' },
-        icon('square-check', 'regular')
-      )
+      el('span', { class: 'u-select-all-icon' }, icon('square-check', 'regular'))
     ),
     el('div', { class: 'u-th u-th-identity' }, 'User'),
     el('div', { class: 'u-th u-th-email' }, 'Email'),
     el('div', { class: 'u-th u-th-role' }, 'Role'),
     el('div', { class: 'u-th u-th-status' }, 'Status'),
-    el('div', { class: 'u-th u-th-login' },
-      'Last Login', ' ',
-      el('span', { class: 'u-th-hint' }, '↕')
-    ),
+    el('div', { class: 'u-th u-th-login' }, 'Last Login'),
+    el('div', { class: 'u-th u-th-activity' }, 'Activity'),
+    el('div', { class: 'u-th u-th-ip' }, 'IP'),
     el('div', { class: 'u-th u-th-actions' }, '')
   );
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
-
+// ─── Empty State ─────────────────────────────────────────────────────
 function EmptyState() {
   return el('div', { class: 'u-empty-state', id: 'users-empty' },
     el('div', { class: 'u-empty-icon' }, icon('users-slash', 'duotone')),
@@ -319,8 +296,7 @@ function EmptyState() {
   );
 }
 
-// ─── Filter / Control Strip ───────────────────────────────────────────────────
-
+// ─── Filter / Control Strip ───────────────────────────────────────────
 function QuickChips() {
   const chips = [
     { id: 'chip-active',   label: 'Active',          icon: 'circle-check',  filter: 'status', value: 'active'    },
@@ -328,14 +304,11 @@ function QuickChips() {
     { id: 'chip-recent',   label: 'Online today',     icon: 'signal',        filter: 'status', value: 'recent'    },
     { id: 'chip-admins',   label: 'Admins',           icon: 'shield-halved', filter: 'role',   value: 'admin'     },
   ];
-
   return el('div', { class: 'u-quick-chips' },
     ...chips.map(c =>
       el('button', {
-        class: 'u-chip',
-        id: c.id,
-        'data-chip-filter': c.filter,
-        'data-chip-value': c.value,
+        class: 'u-chip', id: c.id,
+        'data-chip-filter': c.filter, 'data-chip-value': c.value,
         title: `Filter: ${c.label}`
       }, icon(c.icon, 'regular'), ' ', c.label)
     )
@@ -347,55 +320,27 @@ function FilterBar() {
     el('div', { class: 'u-filter-main' },
       el('div', { class: 'u-search-wrap' },
         icon('magnifying-glass', 'regular'),
-        Input({
-          id: 'users-search',
-          placeholder: 'Search users — name, email, username…',
-          className: 'u-search-input',
-          attrs: { autocomplete: 'off', spellcheck: 'false' }
-        }),
+        Input({ id: 'users-search', placeholder: 'Search users — name, email, username…', className: 'u-search-input', attrs: { autocomplete: 'off', spellcheck: 'false' } }),
         el('kbd', { class: 'u-search-kbd' }, '/')
       ),
       el('div', { class: 'u-filter-dropdowns' },
-        CustomDropdown({
-          id: 'filter-role',
-          label: 'Role',
-          extraClass: 'u-filter-dropdown',
-          items: [
-            { label: 'All Roles',  value: '' },
-            { label: 'Admin',      value: 'admin' },
-            { label: 'Editor',     value: 'editor' },
-            { label: 'Author',     value: 'author' },
-            { label: 'SEO',        value: 'seo' },
-            { label: 'Designer',   value: 'designer' },
-            { label: 'Developer',  value: 'developer' },
-            { label: 'User',       value: 'user' },
-          ]
-        }),
-        CustomDropdown({
-          id: 'filter-status',
-          label: 'Status',
-          extraClass: 'u-filter-dropdown',
-          items: [
-            { label: 'All',        value: '' },
-            { label: 'Active',     value: 'active' },
-            { label: 'Suspended',  value: 'suspended' },
-            { label: 'Inactive',   value: 'inactive' },
-          ]
-        }),
-        el('button', {
-          class: 'u-clear-filters',
-          id: 'clear-filters',
-          style: 'display:none',
-          title: 'Reset all filters'
-        }, icon('arrow-rotate-left', 'regular'), ' Reset')
+        CustomDropdown({ id: 'filter-role', label: 'Role', extraClass: 'u-filter-dropdown', items: [
+          { label: 'All Roles', value: '' }, { label: 'Admin', value: 'admin' }, { label: 'Editor', value: 'editor' },
+          { label: 'Author', value: 'author' }, { label: 'SEO', value: 'seo' }, { label: 'Designer', value: 'designer' },
+          { label: 'Developer', value: 'developer' }, { label: 'User', value: 'user' }
+        ]}),
+        CustomDropdown({ id: 'filter-status', label: 'Status', extraClass: 'u-filter-dropdown', items: [
+          { label: 'All', value: '' }, { label: 'Active', value: 'active' }, { label: 'Suspended', value: 'suspended' }, { label: 'Inactive', value: 'inactive' }
+        ]}),
+        el('button', { class: 'u-clear-filters', id: 'clear-filters', style: 'display:none', title: 'Reset all filters' },
+          icon('arrow-rotate-left', 'regular'), ' Reset')
       ),
       QuickChips()
     )
   );
 }
 
-// ─── Bulk Action Bar ──────────────────────────────────────────────────────────
-
+// ─── Bulk Action Bar ──────────────────────────────────────────────────
 function BulkBar() {
   return el('div', { class: 'u-bulk-bar', id: 'bulk-bar', 'aria-hidden': 'true' },
     el('div', { class: 'u-bulk-identity' },
@@ -407,54 +352,46 @@ function BulkBar() {
     ),
     el('div', { class: 'u-bulk-divider' }),
     el('div', { class: 'u-bulk-group' },
-      el('button', { class: 'u-bulk-btn', 'data-bulk-action': 'activate', title: 'Activate selected' }, icon('circle-check', 'regular'), ' Activate'),
-      el('button', { class: 'u-bulk-btn u-bulk-btn--warn', 'data-bulk-action': 'suspend', title: 'Suspend selected' }, icon('ban', 'regular'), ' Suspend'),
-      el('button', { class: 'u-bulk-btn', 'data-bulk-action': 'force-logout', title: 'Force logout' }, icon('right-from-bracket', 'regular'), ' Force Logout')
+      el('button', { class: 'u-bulk-btn', 'data-bulk-action': 'activate', title: 'Activate' }, icon('circle-check', 'regular'), ' Activate'),
+      el('button', { class: 'u-bulk-btn u-bulk-btn--warn', 'data-bulk-action': 'suspend', title: 'Suspend' }, icon('ban', 'regular'), ' Suspend'),
+      el('button', { class: 'u-bulk-btn', 'data-bulk-action': 'force-logout', title: 'Force Logout' }, icon('right-from-bracket', 'regular'), ' Force Logout')
     ),
     el('div', { class: 'u-bulk-divider' }),
     el('div', { class: 'u-bulk-group' },
-      el('button', { class: 'u-bulk-btn u-bulk-btn--danger', 'data-bulk-action': 'delete', title: 'Delete selected' }, icon('trash', 'regular'), ' Delete')
+      el('button', { class: 'u-bulk-btn u-bulk-btn--danger', 'data-bulk-action': 'delete', title: 'Delete' }, icon('trash', 'regular'), ' Delete')
     ),
     el('button', { class: 'u-bulk-dismiss', id: 'bulk-dismiss', title: 'Clear selection' }, icon('xmark', 'solid'))
   );
 }
 
-// ─── Table Shell ──────────────────────────────────────────────────────────────
-
-function UsersTable(users = [], sessionUser) {
+// ─── Table Shell ──────────────────────────────────────────────────────
+function UsersTable(users = [], sessionUser, activityMap = {}) {
   return el('div', { class: 'u-table-wrap', id: 'users-table-wrap' },
     TableHeader(),
     el('div', { class: 'u-table-body', id: 'users-table-body' },
-      users.length ? users.map(u => UserRow(u, sessionUser)).join('') : EmptyState()
+      users.length ? users.map(u => UserRow(u, sessionUser, activityMap[u.id || u._id])).join('') : EmptyState()
     )
   );
 }
 
-// ─── Toolbar ──────────────────────────────────────────────────────────────────
-
+// ─── Toolbar ──────────────────────────────────────────────────────────
 function Toolbar({ total = 0, limit = 20 } = {}) {
   const perPageOpts = [10, 20, 50, 100];
-
   return el('div', { class: 'u-toolbar' },
     el('div', { class: 'u-toolbar-left' },
       el('span', { class: 'u-total-count', id: 'users-total-count' }, total, ' users'),
       el('div', { class: 'u-perpage-wrap' },
         el('span', { class: 'u-perpage-label' }, 'per page'),
         el('select', { class: 'u-perpage-select', id: 'users-per-page' },
-          ...perPageOpts.map(n =>
-            el('option', { value: n, ...(n === limit ? { selected: true } : {}) }, n)
-          )
+          ...perPageOpts.map(n => el('option', { value: n, ...(n === limit ? { selected: true } : {}) }, n))
         )
       )
     ),
-    el('div', { class: 'u-toolbar-right' },
-      PaginationControls()
-    )
+    el('div', { class: 'u-toolbar-right' }, PaginationControls())
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
-
+// ─── Confirm Modal ────────────────────────────────────────────────────
 function ConfirmModal() {
   return el('div', { class: 'u-modal-overlay', id: 'u-confirm-modal', 'aria-hidden': 'true' },
     el('div', { class: 'u-modal' },
@@ -462,9 +399,7 @@ function ConfirmModal() {
         el('h3', { id: 'u-modal-title' }, 'Confirm Action'),
         el('button', { class: 'u-modal-close', id: 'u-modal-close' }, icon('xmark', 'solid'))
       ),
-      el('div', { class: 'u-modal-body' },
-        el('p', { id: 'u-modal-msg' }, '')
-      ),
+      el('div', { class: 'u-modal-body' }, el('p', { id: 'u-modal-msg' }, '')),
       el('div', { class: 'u-modal-footer' },
         el('button', { class: 'ghost', id: 'u-modal-cancel' }, 'Cancel'),
         el('button', { class: 'u-modal-confirm-btn', id: 'u-modal-confirm' }, 'Confirm')
@@ -477,12 +412,13 @@ function ToastContainer() {
   return el('div', { class: 'u-toast-stack', id: 'u-toast-stack', 'aria-live': 'polite' });
 }
 
-// ─── Main renderUsers ─────────────────────────────────────────────────────────
-
+// ─── Main renderUsers ─────────────────────────────────────────────────
 async function renderUsers(req, res) {
   let users = [];
   let meta = { page: 1, limit: 20, total: 0, pages: 1 };
   let sessionUser = null;
+  let activityMap = {};
+  let activityStats = { onlineNow: 0, activeToday: 0, totalActions: 0, totalPageViews: 0, topPages: [], avgTimeOnline: 0 };
 
   try {
     const { connectDB } = require('../core/connect-db');
@@ -509,12 +445,30 @@ async function renderUsers(req, res) {
       }));
 
       meta = { page, limit, total, pages: Math.ceil(total / limit) };
+
+      // Fetch session activity
+      if (models.SessionActivity) {
+        try {
+          const userIds = users.map(u => u.id);
+          const activities = await models.SessionActivity.find({ userId: { $in: userIds } })
+            .select('userId activePage lastSeen ip isActive sessionId totalVisits todayVisits actionsToday pagesViewedToday totalTimeOnline pagesVisited')
+            .lean();
+          activities.forEach(a => {
+            const uid = a.userId?.toString() || a.userId;
+            activityMap[uid] = a;
+          });
+
+          // Get stats
+          if (models.SessionActivity.getActivityStats) {
+            activityStats = await models.SessionActivity.getActivityStats();
+          }
+        } catch (_) {}
+      }
     }
   } catch (err) {
     console.error('[users.js] SSR preload error:', err.message);
   }
 
-  // Get session user from JWT
   try {
     const jwt = require('jsonwebtoken');
     const SECRET = process.env.JWT_SECRET || "acroxa_super_secret";
@@ -531,20 +485,18 @@ async function renderUsers(req, res) {
     MainHeader({
       title: 'Users',
       actions: [
-        { icon: 'rotate-right', title: 'Refresh',  class: 'btn ghost',    dataClick: 'refresh-users'    },
+        { icon: 'rotate-right', title: 'Refresh',  class: 'btn ghost',    dataClick: 'refresh-users' },
         { icon: 'circle-plus',  title: 'Add User', class: 'btn primary',  dataClick: 'open-create-user' }
       ]
     }),
 
     MainContent(
-      DashboardWidgets(users, meta),
+      BentoStats(users, meta, activityStats),
       FilterBar(),
       BulkBar(),
       Toolbar({ total: meta.total, limit: meta.limit }),
-      UsersTable(users, sessionUser),
-      el('div', { class: 'u-pagination-bottom' },
-        PaginationControls()
-      )
+      UsersTable(users, sessionUser, activityMap),
+      el('div', { class: 'u-pagination-bottom' }, PaginationControls())
     ),
 
     ConfirmModal(),
@@ -552,11 +504,9 @@ async function renderUsers(req, res) {
 
     el('script', { id: 'users-page-state', type: 'application/json' },
       JSON.stringify({
-        page: meta.page,
-        limit: meta.limit,
-        total: meta.total,
-        pages: meta.pages,
-        sessionUser: sessionUser
+        page: meta.page, limit: meta.limit, total: meta.total, pages: meta.pages,
+        sessionUser: sessionUser,
+        activityStats: activityStats
       })
     )
   );

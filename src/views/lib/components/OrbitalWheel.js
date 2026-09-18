@@ -41,7 +41,7 @@
 // item shape:
 //   { key, title, icon, accent, status, value, unit, delta, sub, spark: [numbers] }
 //
-const { el, escapeHTML, icon, escapeAttr } = require('../framework');
+const { el, escapeHTML, icon } = require('../framework');
 const DEFAULT_SETTINGS = {
   drag: true,
   touch: true,
@@ -100,7 +100,10 @@ function OrbitalWheel({
     for (let i = 1; i < pts.length; i++) line += ` L ${pts[i][0]},${pts[i][1]}`;
     const fill = `${line} L ${pts[pts.length - 1][0]},${h} L ${pts[0][0]},${h} Z`;
 
-    return el('svg', { class: cls('spark'), viewBox: `0 0 ${w} ${h}` },
+    // NOTE: lowercase "viewbox" is intentional — el() kebab-cases camelCase
+    // keys, which would turn "viewBox" into the invalid "view-box". HTML
+    // parses SVG attributes case-insensitively so `viewbox` still works.
+    return el('svg', { class: cls('spark'), viewbox: `0 0 ${w} ${h}` },
       el('path', { class: cls('fill'), d: fill }),
       el('path', { class: cls('line'), d: line })
     );
@@ -140,9 +143,11 @@ function OrbitalWheel({
   const cardEls = items.map(card).join('');
 
   // Only the data the frontend needs to rebuild sparklines / accents / labels
-  // gets serialized — full item objects, safely escaped for an HTML attribute.
-  const serializedItems = escapeAttr(JSON.stringify(items));
-  const serializedSettings = escapeAttr(JSON.stringify(s));
+  // gets serialized. NOTE: pass raw JSON — el() already escapeAttr()s every
+  // attribute value exactly once. Pre-escaping here would double-encode
+  // quotes (&quot; -> &amp;quot;) so getAttribute() returns invalid JSON.
+  const serializedItems = JSON.stringify(items);
+  const serializedSettings = JSON.stringify(s);
 
   return el('section', {
       id,

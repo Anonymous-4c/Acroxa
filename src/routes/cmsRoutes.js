@@ -4,6 +4,17 @@ const router = express.Router();
 const cms = require("../controllers/cmsController");
 const { verifyAPIToken, requireRoles, checkOwnership, attachAuthId } = require("../middlewares/authMiddleware");
 
+// Editor docs can be posts OR pages (postType arrives via body.postType,
+// query.type, or defaults to post). Ownership must follow the actual doc
+// type — a hardcoded "post" key would 404/allow incorrectly for pages.
+function checkEditorOwnership(idParam = "id") {
+  return async (req, res, next) => {
+    const docType = req.body?.postType || req.query?.type || "post";
+    const key = docType === "page" ? "page" : "post";
+    return checkOwnership(key, idParam)(req, res, next);
+  };
+}
+
 // ===============================
 // 🧩 CATEGORY ROUTES
 // ===============================
@@ -124,7 +135,12 @@ router.post('/seo/analyze', verifyAPIToken, cms.analyzeSEO);
 // ===============================
 router.get('/editor/:id/data', attachAuthId, cms.getEditorData);
 router.get('/editor/:id/content', attachAuthId, cms.loadEditorContent);
-router.post('/editor/:id/content', verifyAPIToken, cms.saveEditorContent);
+router.post('/editor/:id/content',
+  verifyAPIToken,
+  requireRoles(["author", "editor", "admin"]),
+  checkEditorOwnership("id"),
+  cms.saveEditorContent
+);
 
 // ===============================
 // 🧩 EDITOR — Revisions
@@ -134,13 +150,19 @@ router.get('/editor/:id/revisions/:revisionId', attachAuthId, cms.getRevision);
 router.post('/editor/:id/revisions/:revisionId/restore',
   verifyAPIToken,
   requireRoles(["author", "editor", "admin"]),
-  checkOwnership("post", "id"),
+  checkEditorOwnership("id"),
   cms.restoreRevision
 );
 
 // ===============================
 // 🧩 EDITOR — Live preview (renders unsaved draft through the real pipeline)
 // ===============================
-router.post('/editor/:id/preview', verifyAPIToken, cms.previewEditorContent);
+router.get('/editor/:id/preview/page', attachAuthId, cms.previewEditorPage);
+router.post('/editor/:id/preview',
+  verifyAPIToken,
+  requireRoles(["author", "editor", "admin"]),
+  checkEditorOwnership("id"),
+  cms.previewEditorContent
+);
 
 module.exports = router;

@@ -34,6 +34,9 @@ const VALID_SECTIONS = [
   "homepage", "blogPage", "routing",
   "seo", "analytics", "ai", "advanced", "backupPolicy",
   "email",
+  // AcroxaJS runtime (cache strategies, diagnostics — flat shape like all
+  // sections; layers.js policy() reads it, every key affects behavior)
+  "runtime",
 ];
 
 const AI_MODELS = {
@@ -242,6 +245,15 @@ const toggleMaintenance = async (req, res) => {
     const updated = await models.Settings.updateSettings({ system: merged });
 
     settingsEvents.emit("settings.updated", { section: "system", data: merged });
+    // Maintenance is runtime state: push invalidation so visitor clients learn
+    // without restart/polling (admin clients stay authorized).
+    try {
+      require("../core/runtime/invalidate").invalidate({
+        type: "system", id: "maintenance", scope: "global",
+        reason: enabled ? "maintenance:on" : "maintenance:off",
+        strategy: "full-reload",
+      });
+    } catch (_) {}
     return res.json({ success: true, data: updated.system });
   } catch (err) {
     console.error("[Settings] toggleMaintenance:", err);
@@ -419,9 +431,17 @@ const sendTestEmail = async (req, res) => {
   }
 };
 
-// FLUSH CACHE
+// FLUSH CACHE — explicit, scoped invalidation (never "clear everything" by default).
+// Clears: runtime cache layer, RouteResolver caches, then rebuilds the file-route
+// router atomically. Does NOT nuke the whole require.cache (that destroys live
+// layout engines and leaks listeners); route modules reload via loadRoutes.
 const flushCache = async (req, res) => {
   try {
+    let runtimeCleared = 0;
+    try {
+      runtimeCleared = require("../core/runtime/cache").clearAll();
+    } catch (_) {}
+
     // Bust all routing caches
     try {
       const { bustSettingsCache, bustBlogSlugCache } = require("../core/RouteResolver");
@@ -429,13 +449,15 @@ const flushCache = async (req, res) => {
       bustBlogSlugCache();
     } catch (_) {}
 
-    // Clear require cache for route modules (hot-reload style)
-    const cacheKeys = Object.keys(require.cache).filter(
-      k => k.includes("/routes/") || k.includes("/controllers/") || k.includes("/views/")
-    );
-    cacheKeys.forEach(k => delete require.cache[k]);
+    // Rebuild the file-route inner router deterministically (atomic swap).
+    let routes = null;
+    try {
+      routes = require("../core/loadRoutes").reloadRoutes();
+    } catch (e) {
+      routes = { success: false, error: e.message };
+    }
 
-    return res.json({ success: true, message: "Cache flushed", cleared: cacheKeys.length });
+    return res.json({ success: true, message: "Cache flushed", runtimeCleared, routes });
   } catch (err) {
     console.error("[Settings] flushCache:", err);
     return res.status(500).json({ success: false, message: "Cache flush failed" });

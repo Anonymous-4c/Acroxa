@@ -62,6 +62,15 @@ function getDbType() {
   return "unknown";
 }
 
+// Malformed Mongo ids make Mongoose throw a CastError inside findById/
+// findOne (→ 500). Reject them up front with a 400 so malformed editor URLs
+// and probes never surface as server errors. SQL lookups (findByPk/findOne
+// with where) return null instead of throwing, so any id shape is fine.
+function isValidDocumentId(id, dbType) {
+  if (dbType !== "mongoose") return true;
+  return typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+}
+
 // Helper: Normalize slug
 const generateSlug = (text) => {
   if (!text) return "";
@@ -73,6 +82,36 @@ const generateSlug = (text) => {
     .replace(/--+/g, "-")
     .replace(/^-+|-+$/g, "");
 };
+
+//Helper: ensure a slug is unique for a model (post/page). Appends -2, -3…
+//or a short random suffix when collisions occur (e.g. repeated
+//"Untitled Post" drafts). Works for both Sequelize and Mongoose.
+async function ensureUniqueSlug(Model, baseSlug, excludeId = null) {
+  const base = (baseSlug || "untitled").slice(0, 120) || "untitled";
+  let slug = base;
+  let attempt = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let exists = null;
+    try {
+      if (getDbType() === "sequelize") {
+        const where = { slug };
+        exists = await Model.findOne({ where });
+        if (exists && excludeId && String(exists.id) === String(excludeId)) exists = null;
+      } else {
+        const q = { slug };
+        exists = await Model.findOne(q).lean();
+        if (exists && excludeId && String(exists._id) === String(excludeId)) exists = null;
+      }
+    } catch (_) {
+      break;
+    }
+    if (!exists) return slug;
+    attempt += 1;
+    slug = attempt < 4 ? `${base}-${attempt + 1}` : `${base}-${Date.now().toString(36).slice(-4)}${attempt}`;
+    if (attempt > 10) return `${base}-${Date.now().toString(36)}`;
+  }
+}
 
 // Helper: Get user ID from request
 const getUserId = (req) => {
@@ -582,7 +621,7 @@ exports.createPost = async (req, res) => {
 
     const postData = {
       title: title.trim(),
-      slug: req.body.slug || generateSlug(title),
+      slug: await ensureUniqueSlug(Post, req.body.slug || generateSlug(title) || "untitled-post"),
       content: content,
       ast: req.body.ast || {},
       schemaVersion: req.body.schemaVersion || "1",
@@ -818,7 +857,7 @@ exports.createPage = async (req, res) => {
 
     const pageData = {
       title: title.trim(),
-      slug: req.body.slug || generateSlug(title),
+      slug: await ensureUniqueSlug(Page, req.body.slug || generateSlug(title) || "untitled-page"),
       content: content || "",
       ast: req.body.ast || {},
       schemaVersion: req.body.schemaVersion || "1",
@@ -1453,17 +1492,27 @@ exports.saveEditorContent = async (req, res) => {
       if (!document) return res.status(404).json({ success: false, message: "Document not found" });
     }
 
-    // Create revision snapshot
+    // Create revision snapshot (backend-agnostic: mongoose chain vs sequelize options).
     try {
       const Revision = models.Revision;
       if (Revision) {
-        const lastRev = await Revision.findOne({ documentId: id, documentType: postType || "post" })
-          .sort({ revisionNumber: -1 })
-          .lean();
-        const nextNum = lastRev ? (lastRev.revisionNumber || 0) + 1 : 1;
+        const docType = postType || "post";
+        let nextNum = 1;
+        if (dbType === "sequelize") {
+          const lastRev = await Revision.findOne({
+            where: { documentId: id, documentType: docType },
+            order: [["revisionNumber", "DESC"]],
+          });
+          nextNum = lastRev ? (lastRev.revisionNumber || 0) + 1 : 1;
+        } else {
+          const lastRev = await Revision.findOne({ documentId: id, documentType: docType })
+            .sort({ revisionNumber: -1 })
+            .lean();
+          nextNum = lastRev ? (lastRev.revisionNumber || 0) + 1 : 1;
+        }
         await Revision.create({
           documentId: id,
-          documentType: postType || "post",
+          documentType: docType,
           content: contentObj,
           title: document.title,
           status: document.status,
@@ -1497,6 +1546,9 @@ exports.loadEditorContent = async (req, res) => {
     if (!Model) return res.status(503).json({ error: "Content model not available" });
 
     const dbType = getDbType();
+    if (!isValidDocumentId(id, dbType)) {
+      return res.status(400).json({ success: false, message: "Invalid document id" });
+    }
     let document;
 
     if (dbType === "sequelize") {
@@ -1578,6 +1630,9 @@ exports.getEditorData = async (req, res) => {
     if (!Model) return res.status(503).json({ error: "Content model not available" });
 
     const dbType = getDbType();
+    if (!isValidDocumentId(id, dbType)) {
+      return res.status(400).json({ success: false, message: "Invalid document id" });
+    }
     let document;
 
     if (dbType === "sequelize") {
@@ -1709,6 +1764,7 @@ exports.getRevisions = async (req, res) => {
         where,
         order: [["revisionNumber", "DESC"]],
         attributes: { exclude: ["content"] },
+        limit: 50,
       });
       revisions = revisions.map((r) => (typeof r.toJSON === "function" ? r.toJSON() : r));
     } else {
@@ -1735,6 +1791,9 @@ exports.getRevision = async (req, res) => {
     if (!Revision) return res.status(503).json({ success: false, message: "Revisions not available" });
 
     const dbType = getDbType();
+    if (!isValidDocumentId(revisionId, dbType)) {
+      return res.status(400).json({ success: false, message: "Invalid revision id" });
+    }
     let revision;
     if (dbType === "sequelize") {
       revision = await Revision.findOne({ where: { id: revisionId, documentId: id, documentType: postType } });
@@ -1837,18 +1896,19 @@ exports.restoreRevision = async (req, res) => {
 // ===============================
 // 🧩 EDITOR — Live preview
 // ===============================
-// Renders UNSAVED editor state through the real layout pipeline: an isolated
-// preview engine resolves the document URL and widgetRenderer draws
-// content.json — with this request's draft overlaid on top of the stored data.
+// CONTRACT (P0-06): JSON in, JSON out. The client POSTs the unsaved draft
+// ({ content, title, postType, meta, seo }) and always receives
+// `{ success: true, html }` — never a text/html body — so the editor can
+// open the rendered page from a blob URL without saving first.
 exports.previewEditorContent = async (req, res) => {
   try {
     const models = getModels();
     const { id } = req.params;
-    const postType = req.query.type || "post";
+    const postType = req.query.type || req.body?.postType || "post";
     const { content, meta, seo } = req.body || {};
 
     const Model = postType === "page" ? models.Page : models.Post;
-    if (!Model) return res.status(503).send("Content model not available");
+    if (!Model) return res.status(503).json({ success: false, message: "Content model not available" });
 
     // Stored doc may legitimately be missing for brand-new drafts; overlay wins.
     const dbType = getDbType();
@@ -1859,7 +1919,7 @@ exports.previewEditorContent = async (req, res) => {
       document = await Model.findById(id).lean();
     }
     if (!document && !content?.json) {
-      return res.status(404).send("Nothing to preview yet");
+      return res.status(404).json({ success: false, message: "Nothing to preview yet" });
     }
 
     // Resolve the virtual URL exactly like RouteResolver would.
@@ -1879,7 +1939,7 @@ exports.previewEditorContent = async (req, res) => {
       try {
         parsedJson = typeof content.json === "string" ? JSON.parse(content.json) : content.json;
       } catch (_) {
-        return res.status(400).send("Preview content is corrupt");
+        return res.status(400).json({ success: false, message: "Preview content is corrupt" });
       }
       overlay.editorContent = parsedJson;
       overlay.contentHtml = renderDocument(parsedJson) || "";
@@ -1915,7 +1975,7 @@ exports.previewEditorContent = async (req, res) => {
         return null;
       }
     })();
-    if (!activeLayout) return res.status(503).send("No active layout to preview with");
+    if (!activeLayout) return res.status(503).json({ success: false, message: "No active layout to preview with" });
 
     // Pin resolution so drafts / renamed slugs / never-published docs resolve.
     const resolution = {
@@ -1958,11 +2018,75 @@ exports.previewEditorContent = async (req, res) => {
       { __resolution: resolution, ...overlay }
     );
 
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-Robots-Tag", "noindex");
-    res.send(html);
+    res.json({ success: true, html });
   } catch (err) {
     console.error("[Editor] previewEditorContent error:", err);
+    res.status(500).json({ success: false, message: `Preview failed: ${err.message}` });
+  }
+};
+
+// GET /editor/:id/preview/page — customizer-parity iframe preview.
+// Unlike POST /preview (JSON {html} for unsaved blobs), this returns
+// text/html directly so the editor can embed it in an <iframe> exactly
+// like /acr/api/layouts/preview?id&url. It renders the last SAVED
+// document through the active layout pipeline; callers should save (or
+// autosave-flush) first, then load this URL with a cache-buster.
+// Query: ?type=post|page&device=desktop|tablet|mobile&t=<ts>
+exports.previewEditorPage = async (req, res) => {
+  try {
+    const models = getModels();
+    const { id } = req.params;
+    const postType = req.query.type || "post";
+    const Model = postType === "page" ? models.Page : models.Post;
+    if (!Model) return res.status(503).send("Content model not available");
+    const dbType = getDbType();
+    let document = null;
+    if (dbType === "sequelize") document = await Model.findByPk(id);
+    else {
+      if (!isValidDocumentId(id, dbType)) return res.status(400).send("Invalid document id");
+      document = await Model.findById(id).lean();
+    }
+    if (!document) return res.status(404).send("Nothing to preview yet — save first");
+    let routing = {};
+    try {
+      const { getRoutingSettings } = require("../core/RouteResolver");
+      routing = (await getRoutingSettings()).routing || {};
+    } catch (_) {}
+    const prefix = postType === "page" ? (routing.pagePrefix || "") : (routing.postPrefix || "post");
+    const slug = document.slug || generateSlug(document.title || "") || String(id);
+    const virtualUrl = postType === "page" ? `/${slug}`.replace(/^\/+/, "/") : `/${prefix}/${slug}`;
+    let parsed = null;
+    try {
+      const raw = document.content?.json ?? document.content;
+      parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch (_) { parsed = null; }
+    const overlay = {
+      editorContent: parsed,
+      contentHtml: renderDocument(parsed) || document.content?.html || "",
+      contentRaw: extractTextFromDocument(parsed) || document.content?.raw || "",
+      page_title: document.title,
+      previewDevice: req.query.device || "desktop",
+    };
+    const activeLayout = (() => {
+      try { return require("../core/layoutHelpers").getActiveLayout(); }
+      catch (_) { return null; }
+    })();
+    if (!activeLayout) return res.status(503).send("No active layout to preview with");
+    const resolution = { type: postType, template: postType === "page" ? "page" : "post", slug, params: {}, context: "preview" };
+    if (postType === "page") {
+      overlay.page = { ...(document || {}), title: document.title || "Untitled Page", slug, content: { json: parsed ?? document?.content?.json ?? null } };
+    } else {
+      overlay.post = { ...(document || {}), title: document.title || "Untitled Post", slug };
+    }
+    const PreviewEngineManager = require("../core/PreviewEngineManager");
+    const html = await PreviewEngineManager.render(global.acrx, activeLayout, virtualUrl, null, { __resolution: resolution, ...overlay });
+    res.setHeader("X-Robots-Tag", "noindex");
+    res.setHeader("X-Preview-URL", virtualUrl);
+    res.setHeader("Cache-Control", "no-store");
+    res.type("html").send(html);
+  } catch (err) {
+    console.error("[Editor] previewEditorPage error:", err);
     res.status(500).send(`Preview failed: ${err.message}`);
   }
 };

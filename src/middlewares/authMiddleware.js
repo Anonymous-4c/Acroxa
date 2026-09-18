@@ -109,13 +109,10 @@ const injectTokenScript = `
 
       if (data?.success === true) {
         document.body.classList.remove("hidden");
-        console.log("Auth verified → page visible");
       } else {
         throw new Error("Success false");
       }
     } catch (err) {
-      console.log("Auth check failed → redirecting", err);
-
       const returnUrl = encodeURIComponent(
         location.pathname + location.search + location.hash
       );
@@ -310,14 +307,14 @@ function checkOwnership(resourceKey = "post", idParam = "id") {
 function verifyAPIToken(req, res, next) {
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) {
-    return res.status(404).send(global.currentLayoutEngine.render404() || `<h1>404 Page Not Found</h1>`);
+    return res.status(401).json({ success: false, message: "Not authenticated" });
   }
 
   const tokenMatch = cookieHeader.match(/auth_token=([^;]+)/);
   const token = tokenMatch ? tokenMatch[1] : null;
 
   if (!token) {
-    return res.status(404).send(global.currentLayoutEngine.render404() || `<h1>404 Page Not Found</h1>`);
+    return res.status(401).json({ success: false, message: "Not authenticated" });
   }
 
   try {
@@ -331,7 +328,7 @@ function verifyAPIToken(req, res, next) {
     req.user = decoded;
     next();
   } catch {
-    return res.status(404).send(global.currentLayoutEngine.render404() || `<h1>404 Page Not Found</h1>`);
+    return res.status(401).json({ success: false, message: "Invalid token" });
   }
 }
 function attachAuthId(req, res, next) {

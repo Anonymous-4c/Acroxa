@@ -42,12 +42,20 @@ describe("graph separator normalization", () => {
 
 describe("pages.js declares view-file impact edges", () => {
   const pages = src("src/routes/pages.js");
+  const depsMod = src("src/core/runtime/render/deps.js");
 
   it("depends each page on its view source file in the invalidation key space", () => {
-    assert.ok(pages.includes("graph.depend("), "graph.depend call missing");
-    assert.ok(pages.includes('"page:"'), "page: resource prefix missing");
+    assert.ok(pages.includes("declarePageDeps("), "declarePageDeps call missing");
+    assert.ok(pages.includes('"page:" + v.path'), "page: resource prefix missing");
     assert.ok(pages.includes("__file"), "must use the per-view source file");
     assert.ok(pages.includes("VIEWS_DIR"), "must key on the real view path");
+    // The scanner module owns the actual graph.depend call.
+    assert.ok(depsMod.includes("graph\").depend("), "deps.js must declare graph edges");
+  });
+
+  it("walks each view's imports so component changes reach the page", () => {
+    assert.ok(depsMod.includes("require.resolve"), "must resolve requires like Node");
+    assert.ok(depsMod.includes("scanFileImports"), "import scanner missing");
   });
 });
 

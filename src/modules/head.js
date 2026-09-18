@@ -88,9 +88,20 @@ function renderHead({
       <link rel="stylesheet" href="/acrx/assets/css/sharp-regular.css">
       
       <script src="/acrx/assets/js/utils.js"></script>
+      <script src="/acrx/assets/js/framework.js"></script>
       <script src="/acrx/assets/js/all.js"></script>
+      <script src="/acrx/assets/js/api-client.js"></script>
+      <script src="/acrx/assets/js/acrx-debug.js"></script>
+      <script src="/acrx/assets/js/acrx-hooks.js"></script>
+      <script src="/acrx/assets/js/hydration.js"></script>
+      <script src="/acrx/assets/js/dom-patch.js"></script>
+      <script src="/acrx/assets/js/acrx-targeted.js"></script>
+      <script src="/acrx/assets/js/acrx-update-guard.js"></script>
+      <script src="/acrx/assets/js/acrx-admin-runtime.js"></script>
+      <script src="/acrx/assets/js/acrx-runtime-knob.js"></script>
       
-      <script src="http://localhost:35729/livereload.js"></script>
+      ${process.env.NODE_ENV !== "production" ? `<!-- dev livereload (localhost only) -->` : ""}
+      ${process.env.NODE_ENV !== "production" ? `<script>if(location.hostname==="localhost"||location.hostname==="127.0.0.1"){var s=document.createElement("script");s.src="http://"+location.hostname+":35729/livereload.js";document.head.appendChild(s);}</script>` : ""}
       ${mainjs ? `<script src="/acrx/assets/js/main.js"></script>` : ""}
       <script src="/acrx/assets/js/system/_shared.js"></script>
 
@@ -110,7 +121,6 @@ function renderHead({
 
       <!-- Page-specific Scripts -->
       ${scriptTags}
-            <script type="module" src="/acrx/assets/js/init.js"></script>
     </head>
   `.trim();
 }

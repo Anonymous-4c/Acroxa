@@ -21,10 +21,10 @@ fs.readdirSync(modelsDir)
 
       if (typeof buildModel === "function") {
         models[modelName] = buildModel();
-        console.log(`[Mongo] Model loaded → ${modelName}`);
+        require("../core/logStream").quiet("info", `[Mongo] Model loaded → ${modelName}`);
       }
     } catch (err) {
-      console.error(
+      require("../core/logStream").quiet("error",
         `[Mongo] Failed to load model ${modelName}:`,
         err.message
       );

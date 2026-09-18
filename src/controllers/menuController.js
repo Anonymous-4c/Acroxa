@@ -261,7 +261,6 @@ exports.getSlots = async (req, res) => {
         const metaFile = path.join(
           __dirname, "../layouts", layoutId, "meta.json"
         );
-        console.log(metaFile)
         if (fs.existsSync(metaFile)) {
           const meta = JSON.parse(fs.readFileSync(metaFile, "utf-8"));
           if (Array.isArray(meta.menuAreas) && meta.menuAreas.length) {
